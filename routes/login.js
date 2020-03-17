@@ -15,7 +15,7 @@ loginRouter.post("/", async (req, res, next) => {
         check.rows[0].password,
         (err, compare) => {
           if (compare) {
-            const entryPass = jwt.sign(req.body.username, process.env.LOB);
+            const entryPass = jwt.sign({username: req.body.username}, process.env.LOB, {expiresIn: "1800000"});
             res.cookie("Dineat", entryPass, {
               expires: new Date(Date.now() + 1800000),
               maxAge: 1800000

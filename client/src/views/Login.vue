@@ -1,6 +1,6 @@
 <template>
   <v-app>
-    <v-app-bar elevation="3" fixed class="primary lighten-1 white--text">
+    <v-app-bar elevation="3" fixed color="indigo white--text">
       <v-toolbar-title class="headline">
         Dineat
       </v-toolbar-title>
@@ -20,6 +20,7 @@
               :value="username"
               name="username"
               :rules="[rules.isEmpty]"
+              :error-messages="userError"
             ></v-text-field>
             <v-text-field
               type="password"
@@ -28,6 +29,7 @@
               label="Password"
               name="password"
               :rules="[rules.checkLength]"
+              :error-messages="passError"
             >
             </v-text-field>
             <v-row justify="center">
@@ -112,14 +114,14 @@ export default {
       checkLength: v => v.length >= 8 || "Minimum 8 characters"
     }
   }),
+  
   methods: {
     async onSubmit() {
       this.userError = this.passError = ""
       if (!this.$refs.form.validate()) {
-        console.log("Yes of course that's invalid");
-        console.log(Date.now())
         return;
       }
+      try { 
       let response = await fetch("/gate", {
         method: "POST",
         headers: {
@@ -135,11 +137,14 @@ export default {
       let res = await response.json();
       if (res.matched) {
         this.$router.push('/dashboard')
+        this.$store.commit('sessionStarted', this.username)
       } else {
         this[res.field] = res.msg
       }
+    }catch (err) {
+      console.log(err);
     }
-  }
+  }}
 };
 </script>
 

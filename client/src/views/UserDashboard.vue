@@ -1,54 +1,33 @@
 <template>
   <v-app>
-    <v-app-bar fixed elevation="3" class="primary lighten-1 white--text">
-      <v-toolbar-title class="headline font-weight-medium">Dineat</v-toolbar-title>
+    <v-app-bar fixed>
+      <v-toolbar-title class="headline">Dineat</v-toolbar-title>
       <v-spacer></v-spacer>
-      <v-form ref="form" @submit.prevent="xda">
+      <v-form ref="form" @submit.prevent="textSearch">
         <v-text-field
           label="search"
           v-model="speech"
           :value="speech"
+          hide-details
+          flat
           solo
           prepend-inner-icon="mdi-magnify"
           append-icon="mdi-microphone"
-          @click:append="bookTable"
+          @click:append="voiceSearch"
         ></v-text-field>
       </v-form>
-      <v-btn text @click="logout" color="white">Logout</v-btn>
+      <v-spacer></v-spacer>
+      <v-toolbar-items class="d-none d-sm-flex">
+      
+      <v-btn text color="white">{{ this.$store.state.sessionName }}</v-btn>
+      <v-btn text @click="logout" color="primary">Logout</v-btn>
+      </v-toolbar-items>
     </v-app-bar>
     <v-container class="pa-10 mt-10">
       <v-row justify="center">
         <p class="title font-weight-regular">
-          Now reserve a restaurant table with voice commands.
+          Now reserve a restaurant table with voice commands. Use the search feature to explore more data.
         </p>
-      </v-row>
-      <v-row justify="center">
-        <v-col cols="12" xs="12" sm="6">
-          <v-card class="pa-5 grey lighten-5" tile elevation="5">
-            <v-card-title class="font-weight-regular"
-              >Book your table with voice.</v-card-title
-            >
-            <v-card-text>
-              <v-form @submit.prevent="search(speech)" ref="form1">
-                <v-row align="center">
-                  <v-col cols="10">
-                    <v-text-field
-                      placeholder="Book a table ..."
-                      v-model="speech"
-                      :value="speech"
-                      :rules="[rules.required]"
-                    ></v-text-field>
-                  </v-col>
-                  <v-col cols="1">
-                    <v-btn icon @click="bookTable">
-                      <v-icon color="primary">mdi-microphone</v-icon>
-                    </v-btn>
-                  </v-col>
-                </v-row>
-              </v-form>
-            </v-card-text>
-          </v-card>
-        </v-col>
       </v-row>
       <v-row>
         <v-dialog
@@ -68,13 +47,20 @@
           </v-card>
         </v-dialog>
       </v-row>
-
+      <v-row justify="center">
+        <v-btn color="primary" @click="getData">Fetch</v-btn>
+        <v-btn color="primary" class="ml-10" @click="loadRandom">Only first</v-btn>
+      </v-row>
       <v-row>
-        <v-col>
-          <v-card v-for="(booking, index) in data" :key="index">
+        <v-col cols="12" xs="12" sm="6" v-for="(restaurant, index) in data" :key="index" >
+          <v-card>
+            <v-img :src="restaurant.image" max-height="300px"></v-img>
             <v-card-title>
-              {{ booking.name }}
+              {{ restaurant.name }}
             </v-card-title>
+            <v-card-text>
+              {{ restaurant.location }}
+            </v-card-text>
           </v-card>
         </v-col>
       </v-row>
@@ -120,7 +106,7 @@ export default {
       console.log(voices);
     };
     this.synthesis = synthesis;
-    this.voice = voices[5];
+    this.voice = voices[2];
     console.log(voices);
   },
   methods: {
@@ -135,7 +121,7 @@ export default {
       speaker.rate = 0.9;
       this.synthesis.speak(speaker);
     },
-    async bookTable() {
+    async voiceSearch() {
       try {
         const result = await this.startCapturing(this.recognize);
         this.speech = result;
@@ -167,7 +153,7 @@ export default {
           if (err.error === "no-speech") {
             error = "Please try again ...";
           } else if (err.error === "network") {
-            error = "Internet access is required";
+            error = "Internet access is required for voice search to work";
           } else {
             error = "Microphone access is needed for voice search to work";
           }
@@ -185,15 +171,30 @@ export default {
         }
       }
     },
-    xda() {
-      alert("Now playing!")
-      this.search(speech, this.dictionary)
+    voiceSearch() {
+      this.search(this.speech, this.dictionary)
+    },
+    loadRandom () {
+      const num = Math.floor(Math.random() * 5)
+      this.data = this.$store.getters.fetchRestaurants
+      this.data = [this.data[num]]
+      console.log(num)
+    },
+     getData () {
+      this.data = this.$store.getters.fetchRestaurants
     },
     logout() {
-      this.$router.go("/login");
+      this.$router.push("/login");
       document.cookie =
         "Dineat=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    }
+        console.log("Executed")
+      this.$store.commit('sessionEnded')
+    },
+
   }
 };
 </script>
+
+<style>
+
+</style>

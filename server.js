@@ -23,7 +23,9 @@ app
 
 app.use(express.static(__dirname + "/client/dist/"));
 app.get("/*", (req, res) => {
-  res.sendFile(__dirname + "/client/dist/index.html");
+  res.sendFile(__dirname + "/client/dist/index.html", (err) => {
+    res.status(500).send(err)
+  });
 });
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

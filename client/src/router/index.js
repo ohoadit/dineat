@@ -1,6 +1,6 @@
 import Vue from "vue";
 import VueRouter from "vue-router";
-import Home from "../views/Home.vue";
+import Login from "../views/Login.vue";
 import UserDashboard from "../views/UserDashboard.vue";
 import Signup from "../views/Signup.vue";
 import Reset from "../views/Reset.vue";
@@ -10,11 +10,11 @@ Vue.use(VueRouter);
 const routes = [
   {
     path: "/login",
-    name: "Home",
-    component: Home,
+    name: "Login",
+    component: Login,
     beforeEnter: (to, from, next) => {
       fetch("/bank", {
-        method: "POST",
+        method: "GET",
         credentials: "same-origin"
       })
         .then(res => res.json())
@@ -27,7 +27,7 @@ const routes = [
     component: UserDashboard,
     beforeEnter: (to, from, next) => {
       fetch("/bank", {
-        method: "POST",
+        method: "GET",
         credentials: "same-origin"
       })
         .then(res => res.json())
