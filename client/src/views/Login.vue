@@ -1,6 +1,6 @@
 <template>
   <v-app>
-    <v-app-bar elevation="3" fixed color="indigo white--text">
+    <v-app-bar elevation="3" fixed color="primary white--text">
       <v-toolbar-title class="headline">
         Dineat
       </v-toolbar-title>
@@ -137,7 +137,7 @@ export default {
       let res = await response.json();
       if (res.matched) {
         this.$router.push('/dashboard')
-        this.$store.commit('sessionStarted', this.username)
+        this.$store.commit('setUser', this.username)
       } else {
         this[res.field] = res.msg
       }
@@ -149,11 +149,5 @@ export default {
 </script>
 
 <style scoped>
-.v-card-title {
-  align-items: center;
-  font-size: 34px;
-}
-* {
-  overflow: hidden;
-}
+
 </style>

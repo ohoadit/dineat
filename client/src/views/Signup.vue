@@ -9,11 +9,11 @@
         max-height="500px"
         tile
         elevation="5"
-        class="pa-5 grey lighten-5"
+        class="grey lighten-5"
       >
       <v-toolbar class="primary lighten-1 white--text"><v-toolbar-title>Dineat</v-toolbar-title></v-toolbar>
-        <v-card-title class="headline mb-1">Registration</v-card-title>
-        <v-card-text>
+        <v-card-title class="headline pl-5">Registration</v-card-title>
+        <v-card-text class="pa-5">
           <v-form ref="form" @submit.prevent="onSubmit">
             <v-text-field
               autofocus

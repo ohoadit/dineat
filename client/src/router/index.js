@@ -4,34 +4,45 @@ import Login from "../views/Login.vue";
 import UserDashboard from "../views/UserDashboard.vue";
 import Signup from "../views/Signup.vue";
 import Reset from "../views/Reset.vue";
+import store from "../store"
 
 Vue.use(VueRouter);
+
+const isAuthenticated = async () => {
+  const res = await fetch("/bank", {
+    method: "GET",
+    credentials: "same-origin"
+  });
+  const msg = await res.json();
+  return msg;
+};
 
 const routes = [
   {
     path: "/login",
     name: "Login",
     component: Login,
-    beforeEnter: (to, from, next) => {
-      fetch("/bank", {
-        method: "GET",
-        credentials: "same-origin"
-      })
-        .then(res => res.json())
-        .then(res => (res.valid ? next("/dashboard") : next()));
+    beforeEnter: async (to, from, next) => {
+      const data = await isAuthenticated();
+      if (data.valid) {
+        next("/dashboard");
+      } else {
+        next();
+      }
     }
   },
   {
     path: "/dashboard",
     name: "UserDashboard",
     component: UserDashboard,
-    beforeEnter: (to, from, next) => {
-      fetch("/bank", {
-        method: "GET",
-        credentials: "same-origin"
-      })
-        .then(res => res.json())
-        .then(res => (res.valid ? next() : next("/login")));
+    beforeEnter: async (to, from, next) => {
+      const data = await isAuthenticated();
+      if (data.valid) {
+        next();
+        store.commit('setUser', data.user.username)
+      } else {
+        next('/login')
+      }
     }
   },
   {
@@ -44,7 +55,7 @@ const routes = [
         credentials: "same-origin"
       })
         .then(res => res.json())
-        .then(res => (res.valid ? next('/dashboard') : next()));
+        .then(res => (res.valid ? next("/dashboard") : next()));
     }
   },
   {

@@ -1,33 +1,38 @@
 <template>
   <v-app>
-    <v-app-bar fixed>
+    <v-app-bar fixed color="primary white--text">
       <v-toolbar-title class="headline">Dineat</v-toolbar-title>
-      <v-spacer></v-spacer>
-      <v-form ref="form" @submit.prevent="textSearch">
-        <v-text-field
-          label="search"
-          v-model="speech"
-          :value="speech"
-          hide-details
-          flat
-          solo
-          prepend-inner-icon="mdi-magnify"
-          append-icon="mdi-microphone"
-          @click:append="voiceSearch"
-        ></v-text-field>
-      </v-form>
+
       <v-spacer></v-spacer>
       <v-toolbar-items class="d-none d-sm-flex">
-      
-      <v-btn text color="white">{{ this.$store.state.sessionName }}</v-btn>
-      <v-btn text @click="logout" color="primary">Logout</v-btn>
+        <v-btn text color="white">{{ this.$store.state.sessionName }}</v-btn>
+
+        <v-btn text @click="logout" color="white">Logout</v-btn>
       </v-toolbar-items>
     </v-app-bar>
     <v-container class="pa-10 mt-10">
       <v-row justify="center">
         <p class="title font-weight-regular">
-          Now reserve a restaurant table with voice commands. Use the search feature to explore more data.
+          Now reserve a restaurant table with voice commands. Use the search
+          feature to explore.
         </p>
+      </v-row>
+      <v-row justify="center" class="mb-5">
+        <v-col cols="12" xs="12" sm="10" md="9">
+          <v-form ref="form" @submit.prevent="textSearch">
+            <v-text-field
+              label="search"
+              v-model="speech"
+              :value="speech"
+              hide-details
+              solo
+              clearable
+              prepend-inner-icon="mdi-magnify"
+              append-icon="mdi-microphone"
+              @click:append="voiceSearch"
+            ></v-text-field>
+          </v-form>
+        </v-col>
       </v-row>
       <v-row>
         <v-dialog
@@ -39,26 +44,34 @@
           <v-card tile>
             <v-card-title>
               Capturing commands...
+              <v-spacer></v-spacer>
+              <v-progress-circular
+                :indeterminate="infinite"
+                color="primary lighten-1"
+              ></v-progress-circular>
             </v-card-title>
-            <v-progress-linear
-              :indeterminate="infinite"
-              color="primary lighten-1"
-            ></v-progress-linear>
           </v-card>
         </v-dialog>
       </v-row>
       <v-row justify="center">
         <v-btn color="primary" @click="getData">Fetch</v-btn>
-        <v-btn color="primary" class="ml-10" @click="loadRandom">Only first</v-btn>
+        <v-btn color="primary" class="ml-10" @click="loadRandom">Random</v-btn>
       </v-row>
       <v-row>
-        <v-col cols="12" xs="12" sm="6" v-for="(restaurant, index) in data" :key="index" >
+        <v-col
+          cols="12"
+          xs="12"
+          sm="6"
+          md="3"
+          v-for="(restaurant, index) in data"
+          :key="index"
+        >
           <v-card>
             <v-img :src="restaurant.image" max-height="300px"></v-img>
             <v-card-title>
               {{ restaurant.name }}
             </v-card-title>
-            <v-card-text>
+            <v-card-text class="">
               {{ restaurant.location }}
             </v-card-text>
           </v-card>
@@ -77,6 +90,7 @@ export default {
     voice: null,
     speech: "",
     voiceDialog: false,
+    notify: false,
     data: [],
     bookWords: ["book", "book a table", "find a table", "table", "find"],
     infinite: true,
@@ -87,16 +101,16 @@ export default {
   mounted() {
     const recognition =
       window.webkitSpeechRecognition || window.SpeechRecognition;
+    if (!recognition) {
+      this.notify = true;
+      return;
+    }
     let recognize = new recognition();
     if (recognize) {
       recognize.lang = "en-US";
       recognize.interimResults = false;
       recognize.maxAlternatives = 1;
       this.recognize = recognize;
-    } else {
-      alert(
-        "Assistant requires speech recognition enabled in the browser. \n Google Chrome is recommended"
-      );
     }
     let voices = [];
     const synthesis = window.speechSynthesis;
@@ -106,7 +120,7 @@ export default {
       console.log(voices);
     };
     this.synthesis = synthesis;
-    this.voice = voices[2];
+    this.voice = voices[4];
     console.log(voices);
   },
   methods: {
@@ -116,22 +130,11 @@ export default {
       }
       const speaker = new SpeechSynthesisUtterance(toSpeak);
       speaker.voice = this.voice;
-      console.log(this.voice);
       speaker.pitch = 1;
       speaker.rate = 0.9;
       this.synthesis.speak(speaker);
     },
-    async voiceSearch() {
-      try {
-        const result = await this.startCapturing(this.recognize);
-        this.speech = result;
-        this.search(this.speech.toLowerCase(), this.bookWords)
-          ? this.dictate("Here are some results")
-          : this.dictate("Sorry. No match found.");
-      } catch (err) {
-        this.dictate(err);
-      }
-    },
+
     startCapturing(recognize) {
       const promise = new Promise((solved, denied) => {
         recognize.onstart = () => {
@@ -163,38 +166,51 @@ export default {
       });
       return promise;
     },
+
     search(keyword, dictionary) {
-      console.log("Search called!")
-      for (let word of dictionary) {
-        if (keyword == word) {
-          return true;
+      console.log("Search called!");
+      console.log(`Keyword : ${keyword}`);
+      console.log(`Dictionary : ${dictionary}`);
+      const res = dictionary.filter(word => keyword === word);
+      return res.length ? true : false;
+    },
+
+    async voiceSearch() {
+      try {
+        if (this.notify) {
         }
+        const result = await this.startCapturing(this.recognize);
+        this.speech = result;
+        this.search(this.speech.toLowerCase(), this.bookWords)
+          ? this.dictate("Here are some results")
+          : this.dictate("Sorry. No match found.");
+      } catch (err) {
+        this.dictate(err);
       }
     },
-    voiceSearch() {
-      this.search(this.speech, this.dictionary)
+
+    textSearch() {
+      console.log(this.speech);
+      this.search(this.speech.toLowerCase(), this.bookWords)
+        ? this.dictate("Here is what I found ...")
+        : this.dictate("No match found");
     },
-    loadRandom () {
-      const num = Math.floor(Math.random() * 5)
-      this.data = this.$store.getters.fetchRestaurants
-      this.data = [this.data[num]]
-      console.log(num)
+    loadRandom() {
+      const num = Math.floor(Math.random() * 5);
+      this.data = this.$store.getters.fetchRestaurants;
+      this.data = [this.data[num]];
     },
-     getData () {
-      this.data = this.$store.getters.fetchRestaurants
+    getData() {
+      this.data = this.$store.getters.fetchRestaurants;
     },
     logout() {
       this.$router.push("/login");
       document.cookie =
         "Dineat=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-        console.log("Executed")
-      this.$store.commit('sessionEnded')
-    },
-
+      this.$store.commit("sessionEnded");
+    }
   }
 };
 </script>
 
-<style>
-
-</style>
+<style></style>

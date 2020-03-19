@@ -1,10 +1,8 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
-
 Vue.use(Vuex);
 
-export default new Vuex.Store({
-  strict: true,
+const store = new Vuex.Store({
   state: {
     sessionName: '',
     restaurants: [
@@ -42,7 +40,7 @@ export default new Vuex.Store({
     ]
   },
   mutations: {
-    sessionStarted (state, name) {
+    setUser (state, name) {
       state.sessionName = name
     },
   },
@@ -56,6 +54,9 @@ export default new Vuex.Store({
       return state.restaurants[x]
     }
   },
-  actions: {},
+  actions: {
+  },
   modules: {}
 });
+
+export default store;
