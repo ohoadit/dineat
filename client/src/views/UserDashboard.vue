@@ -57,6 +57,16 @@
         <v-btn color="primary" @click="getData">Fetch</v-btn>
         <v-btn color="primary" class="ml-10" @click="loadRandom">Random</v-btn>
       </v-row>
+      <v-alert type="warning" class="mt-10 title font-weight-regular" v-model="alert" dismissible>
+        <p>Google chrome is recommended for voice feature. However, Dineat's voice feature works on firefox too.</p>
+        <p>In case you are using Firefox, you need to activate certain flags.</p>
+        <p>For that</p>
+        <ol>
+          <li>Open a new tab in firefox and type about:config in the URL box and click Accept the risk and continue.</li>
+          <li>Now in the search preference name type media.webspeech.recognition.enable and set it to true it by clicking toggle.</li>
+          <li>Same procedure for media.webspeech.recognition.force_enable and media.webspeech.synth.enabled.</li>
+        </ol>
+      </v-alert>
       <v-row>
         <v-col
           cols="12"
@@ -71,8 +81,8 @@
             <v-card-title>
               {{ restaurant.name }}
             </v-card-title>
-            <v-card-text class="">
-              {{ restaurant.location }}
+            <v-card-text class="title">
+              <v-icon>mdi-gps</v-icon>{{ restaurant.location }}
             </v-card-text>
           </v-card>
         </v-col>
@@ -91,6 +101,7 @@ export default {
     speech: "",
     voiceDialog: false,
     notify: false,
+    alert: false,
     data: [],
     bookWords: ["book", "book a table", "find a table", "table", "find"],
     infinite: true,
@@ -178,6 +189,7 @@ export default {
     async voiceSearch() {
       try {
         if (this.notify) {
+          this.alert = true
         }
         const result = await this.startCapturing(this.recognize);
         this.speech = result;
