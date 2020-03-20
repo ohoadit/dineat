@@ -13,7 +13,7 @@
       >
       <v-toolbar class="primary lighten-1 white--text"><v-toolbar-title>Dineat</v-toolbar-title></v-toolbar>
         <v-card-title class="headline pl-5">Registration</v-card-title>
-        <v-card-text class="pa-5">
+        <v-card-text class="">
           <v-form ref="form" @submit.prevent="onSubmit">
             <v-text-field
               autofocus
@@ -61,7 +61,7 @@ export default {
     rules: {
       isEmpty: v => !!v || "Should not be empty",
       email: v => {
-        const rex = /^[a-zA-Z0-9](\.?[a-zA-Z0-9]){5,}@g(oogle)?mail\.com$/;
+        const rex = /^[a-zA-Z0-9](\.?[a-zA-Z0-9]){5,}@(g(oogle)?mail\.com|iite\.indusuni\.ac\.in)$/
         return rex.test(v) || "Invalid Email";
       }
     }

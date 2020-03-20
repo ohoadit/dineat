@@ -1,13 +1,13 @@
 <template>
   <v-app>
-    <v-app-bar fixed color="primary white--text">
+    <v-app-bar fixed color="white">
       <v-toolbar-title class="headline">Dineat</v-toolbar-title>
 
       <v-spacer></v-spacer>
       <v-toolbar-items class="d-none d-sm-flex">
-        <v-btn text color="white">{{ this.$store.state.sessionName }}</v-btn>
+        <v-btn text color="primary">{{ this.$store.state.sessionName }}</v-btn>
 
-        <v-btn text @click="logout" color="white">Logout</v-btn>
+        <v-btn text @click="logout" color="primary">Logout</v-btn>
       </v-toolbar-items>
     </v-app-bar>
     <v-container class="pa-10 mt-10">
@@ -54,11 +54,10 @@
         </v-dialog>
       </v-row>
       <v-row justify="center">
-        <v-btn color="primary" @click="getData">Fetch</v-btn>
-        <v-btn color="primary" class="ml-10" @click="loadRandom">Random</v-btn>
+        <v-btn color="primary" @click="getData">Find Manually</v-btn>
       </v-row>
       <v-alert type="warning" class="mt-10 title font-weight-regular" v-model="alert" dismissible>
-        <p>Google chrome is recommended for voice feature. However, Dineat's voice feature works on firefox too.</p>
+        <p>Google chrome is recommended for voice search. However, Dineat's voice feature works fine on firefox too.</p>
         <p>In case you are using Firefox, you need to activate certain flags.</p>
         <p>For that</p>
         <ol>
@@ -67,7 +66,7 @@
           <li>Same procedure for media.webspeech.recognition.force_enable and media.webspeech.synth.enabled.</li>
         </ol>
       </v-alert>
-      <v-row>
+      <v-row class="mt-10">
         <v-col
           cols="12"
           xs="12"
@@ -81,8 +80,8 @@
             <v-card-title>
               {{ restaurant.name }}
             </v-card-title>
-            <v-card-text class="title">
-              <v-icon>mdi-gps</v-icon>{{ restaurant.location }}
+            <v-card-text class="subtitle">
+              <v-icon>mdi-map-marker</v-icon>{{ restaurant.location }}
             </v-card-text>
           </v-card>
         </v-col>
@@ -202,10 +201,11 @@ export default {
     },
 
     textSearch() {
-      console.log(this.speech);
-      this.search(this.speech.toLowerCase(), this.bookWords)
-        ? this.dictate("Here is what I found ...")
-        : this.dictate("No match found");
+      if (this.speech === "") {
+        console.log("Returned")
+        return;
+      }
+      console.log(this.$store.getters.searchRestaurant(this.speech.split(" ")))
     },
     loadRandom() {
       const num = Math.floor(Math.random() * 5);

@@ -48,10 +48,20 @@ const store = new Vuex.Store({
     fetchRestaurants (state) {
       return state.restaurants
     },
-    fetchRandom (state) {
-      const x = Math.floor(Math.random() * Math.floor(5))
-      console.log(state.restaurants[x])
-      return state.restaurants[x]
+    searchRestaurant: state => sentence => {
+      sentence.forEach(lexicon => {
+        state.restaurants.filter( restaurant => {
+          let lib = ''
+          for(const key in restaurant) {
+            if (key === "image") {
+              continue
+            }
+            lib += restaurant[key]
+          }
+          console.log(`Complete data: ${lib}`)
+        })
+      })
+      return
     }
   },
   actions: {
