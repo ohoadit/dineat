@@ -1,8 +1,9 @@
 <template>
   <v-app>
-    <v-row justify="center" align="center">
-      <v-card width="500px" max-height="500px" tile elevation="5">
-        <v-toolbar class="primary lighten-1 white--text" elevation="3">
+    <v-row justify="center" class="mt-10"> 
+      <v-col cols="10" xs="10" sm="8" md="6" class="mt-10">
+      <v-card tile elevation="5">
+        <v-toolbar color="indigo white--text">
           <v-toolbar-title class="headline">
             Dineat
           </v-toolbar-title>
@@ -46,6 +47,7 @@
           </v-form>
         </v-card-text>
       </v-card>
+      </v-col>
     </v-row>
     <v-snackbar v-model="snackbar" :color="color" :timeout="timeout">{{
       message

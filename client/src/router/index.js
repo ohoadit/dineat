@@ -4,7 +4,7 @@ import Login from "../views/Login.vue";
 import UserDashboard from "../views/UserDashboard.vue";
 import Signup from "../views/Signup.vue";
 import Reset from "../views/Reset.vue";
-import store from "../store"
+import store from "../store";
 
 Vue.use(VueRouter);
 
@@ -39,9 +39,9 @@ const routes = [
       const data = await isAuthenticated();
       if (data.valid) {
         next();
-        store.commit('setUser', data.user.username)
+        store.commit("setUser", data.user.username);
       } else {
-        next('/login')
+        next("/login");
       }
     }
   },
@@ -73,19 +73,15 @@ const routes = [
         body: JSON.stringify({
           key: id
         })
-      })
-        .then(res => res.json())
+      }).then(res => res.json())
         .then(res => {
-          console.log(res);
-          if (!res.valid) {
-            next("/");
-          }
+          res.valid ? next(): next('/')
         })
         .catch(err => {
           console.log(err);
-          next();
+          next('/');
         });
-    }
+    },
   },
   {
     path: "*",

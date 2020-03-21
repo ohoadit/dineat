@@ -30,12 +30,12 @@ const store = new Vuex.Store({
         image: 'https://images.pexels.com/photos/260922/pexels-photo-260922.jpeg',
         location: 'Bodakdev' 
       },
-      // {
-      //   name: 'Companion',
-      //   cuisines: 'South Indian | Dosa | Idli | Handva',
-      //   image: 'https://images.pexels.com/photos/2225577/pexels-photo-2225577.jpeg',
-      //   location: 'Prahlad Nagar'
-      // }
+      {
+        name: 'Companion',
+        cuisines: 'South Indian | Dosa | Idli | Handva',
+        image: 'https://images.pexels.com/photos/2290753/pexels-photo-2290753.jpeg',
+        location: 'Prahlad Nagar'
+      }
 
     ]
   },
@@ -49,19 +49,7 @@ const store = new Vuex.Store({
       return state.restaurants
     },
     searchRestaurant: state => sentence => {
-      sentence.forEach(lexicon => {
-        state.restaurants.filter( restaurant => {
-          let lib = ''
-          for(const key in restaurant) {
-            if (key === "image") {
-              continue
-            }
-            lib += restaurant[key]
-          }
-          console.log(`Complete data: ${lib}`)
-        })
-      })
-      return
+        return state.restaurants.filter( restaurant => sentence === restaurant.location.toLowerCase())
     }
   },
   actions: {

@@ -2,17 +2,16 @@
   <v-app>
     <v-content>
       <v-img src=""></v-img>
-    <v-row justify="center" class="ma-3">
-      <v-col cols="12" xs="12" sm="7" md="4" class="mt-10">
-      <v-progress-linear indeterminate :active="showProgress" color="primary lighten-1"></v-progress-linear>
+    <v-row justify="center" class="mt-10">
+      <v-col cols="10" xs="10" sm="8" md="6" class="mt-10">
+      <v-progress-linear indeterminate :active="showProgress" color="primary lighten-2"></v-progress-linear>
       <v-card
         max-height="500px"
         tile
         elevation="5"
-        class="grey lighten-5"
       >
-      <v-toolbar class="primary lighten-1 white--text"><v-toolbar-title>Dineat</v-toolbar-title></v-toolbar>
-        <v-card-title class="headline pl-5">Registration</v-card-title>
+      <v-toolbar elevation="3" class="indigo white--text"><v-toolbar-title class="headline">Dineat</v-toolbar-title></v-toolbar>
+        <v-card-title class="subtitle pl-5 font-weight-regular">Registration</v-card-title>
         <v-card-text class="">
           <v-form ref="form" @submit.prevent="onSubmit">
             <v-text-field
@@ -29,7 +28,7 @@
             <v-card-actions class="mt-1">
               <v-spacer></v-spacer>
               <v-btn
-                color="primary lighten-1"
+                color="primary"
                 type="submit"
                 elevation="3"
                 width="100px"
@@ -55,7 +54,7 @@ export default {
     showProgress: false,
     snackbar: false,
     timeout: 7000,
-    message: 'xdadevelopers',
+    message: '',
     color: '',
     disabled: false,
     rules: {
@@ -69,7 +68,6 @@ export default {
   methods: {
     async onSubmit() {
       if (!this.$refs.form.validate()) {
-        console.log(this.$route.params.id)
         return;
       }
       this.showProgress = true
@@ -100,7 +98,5 @@ export default {
 </script>
 
 <style scoped>
-.v-content {
-  background-color: #d4e3ff;
-}
+
 </style>

@@ -1,22 +1,35 @@
 <template>
   <v-app>
-    <v-app-bar fixed color="white">
+    <v-app-bar fixed color="white" elevation="2">
+      <v-app-bar-nav-icon
+        @click="drawer = true"
+        class="d-sm-none"
+      ></v-app-bar-nav-icon>
       <v-toolbar-title class="headline">Dineat</v-toolbar-title>
-
       <v-spacer></v-spacer>
       <v-toolbar-items class="d-none d-sm-flex">
-        <v-btn text color="primary">{{ this.$store.state.sessionName }}</v-btn>
-
+        <v-btn text color="primary">Bookings</v-btn>
         <v-btn text @click="logout" color="primary">Logout</v-btn>
       </v-toolbar-items>
     </v-app-bar>
+    <v-navigation-drawer
+      v-model="drawer"
+      absolute
+      temporary
+      class="d-sm-none"
+    ></v-navigation-drawer>
     <v-container class="pa-10 mt-10">
       <v-row justify="center">
-        <p class="title font-weight-regular">
-          Now reserve a restaurant table with voice commands. Use the search
-          feature to explore.
+        <p class="headline primary--text">
+          Welcome {{ this.$store.state.sessionName }}
         </p>
       </v-row>
+      <v-row justify="center">
+      <p class="title font-weight-regular">
+          Reserve a restaurant table with voice commands. Use the search
+          feature to explore.
+        </p>
+        </v-row>
       <v-row justify="center" class="mb-5">
         <v-col cols="12" xs="12" sm="10" md="9">
           <v-form ref="form" @submit.prevent="textSearch">
@@ -27,6 +40,7 @@
               hide-details
               solo
               clearable
+              color="pink"
               prepend-inner-icon="mdi-magnify"
               append-icon="mdi-microphone"
               @click:append="voiceSearch"
@@ -56,14 +70,34 @@
       <v-row justify="center">
         <v-btn color="primary" @click="getData">Find Manually</v-btn>
       </v-row>
-      <v-alert type="warning" class="mt-10 title font-weight-regular" v-model="alert" dismissible>
-        <p>Google chrome is recommended for voice search. However, Dineat's voice feature works fine on firefox too.</p>
-        <p>In case you are using Firefox, you need to activate certain flags.</p>
+      <v-alert
+        type="warning"
+        class="mt-10 title font-weight-regular"
+        v-model="alert"
+        dismissible
+      >
+        <p>
+          Google chrome is recommended for voice search. However, Dineat's voice
+          feature works fine on firefox too.
+        </p>
+        <p>
+          In case you are using Firefox, you need to activate certain flags.
+        </p>
         <p>For that</p>
         <ol>
-          <li>Open a new tab in firefox and type about:config in the URL box and click Accept the risk and continue.</li>
-          <li>Now in the search preference name type media.webspeech.recognition.enable and set it to true it by clicking toggle.</li>
-          <li>Same procedure for media.webspeech.recognition.force_enable and media.webspeech.synth.enabled.</li>
+          <li>
+            Open a new tab in firefox and type about:config in the URL box and
+            click Accept the risk and continue.
+          </li>
+          <li>
+            Now in the search preference name type
+            media.webspeech.recognition.enable and set it to true it by clicking
+            toggle.
+          </li>
+          <li>
+            Same procedure for media.webspeech.recognition.force_enable and
+            media.webspeech.synth.enabled.
+          </li>
         </ol>
       </v-alert>
       <v-row class="mt-10">
@@ -101,6 +135,7 @@ export default {
     voiceDialog: false,
     notify: false,
     alert: false,
+    drawer: false,
     data: [],
     bookWords: ["book", "book a table", "find a table", "table", "find"],
     infinite: true,
@@ -188,7 +223,7 @@ export default {
     async voiceSearch() {
       try {
         if (this.notify) {
-          this.alert = true
+          this.alert = true;
         }
         const result = await this.startCapturing(this.recognize);
         this.speech = result;
@@ -202,10 +237,10 @@ export default {
 
     textSearch() {
       if (this.speech === "") {
-        console.log("Returned")
+        console.log("Returned");
         return;
       }
-      console.log(this.$store.getters.searchRestaurant(this.speech.split(" ")))
+      this.data = this.$store.getters.searchRestaurant(this.speech);
     },
     loadRandom() {
       const num = Math.floor(Math.random() * 5);

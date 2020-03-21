@@ -74,8 +74,7 @@ admitRouter.post("/knock", async (req, res, next) => {
 
 admitRouter.post("/enroll", async (req, res, next) => {
   const status = await signature(req, res);
-  console.log(status);
-  if (await signature(req, res)) {
+  if (status.approved) {
     try {
       const hash = await bcrypt.hash(req.body.password, 10);
       await pool.query(
