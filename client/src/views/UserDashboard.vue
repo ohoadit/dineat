@@ -70,13 +70,18 @@
       <v-row justify="center">
         <v-btn color="primary" @click="getData">Find Manually</v-btn>
       </v-row>
-      <v-alert
-        type="warning"
-        class="mt-10 title font-weight-regular"
+      
+      <v-dialog
+        class="mt-10 subtitle font-weight-regular"
         v-model="alert"
-        dismissible
+        max-width="500px"
       >
-        <p>
+      <v-card tile color="orange lighten-1 white--text">
+        <v-card-title>
+          Alert
+        </v-card-title>
+        <v-card-text class="white--text title font-weight-regular"> 
+          <p>
           Google chrome is recommended for voice search. However, Dineat's voice
           feature works fine on firefox too.
         </p>
@@ -87,7 +92,7 @@
         <ol>
           <li>
             Open a new tab in firefox and type about:config in the URL box and
-            click Accept the risk and continue.
+            click Accept the risk and continue if on desktop.
           </li>
           <li>
             Now in the search preference name type
@@ -98,8 +103,15 @@
             Same procedure for media.webspeech.recognition.force_enable and
             media.webspeech.synth.enabled.
           </li>
-        </ol>
-      </v-alert>
+        </ol></v-card-text>
+        <v-card-actions>
+        <v-spacer></v-spacer>
+          <v-btn @click="alert=false">Dismiss</v-btn>
+          <v-spacer></v-spacer>
+        </v-card-actions>
+      </v-card>
+      </v-dialog>
+      
       <v-row class="mt-10">
         <v-col
           cols="12"

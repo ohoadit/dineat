@@ -39,6 +39,11 @@ loginRouter.post("/", async (req, res, next) => {
     }
   } catch (err) {
     console.log(err.stack);
+    res.status(500).json({
+      matched: false,
+      field: "passError",
+      msg: "Internal server error :/"
+    })
   }
 });
 
