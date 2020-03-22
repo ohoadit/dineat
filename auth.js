@@ -2,10 +2,18 @@ require('dotenv').config()
 const { Pool } = require('pg')
 const bcrypt = require('bcrypt')
 
-const pool = new Pool({
-    connectionString: process.env.NODE_ENV === "production" ? process.env.CLOUD : process.env.DEV,
-    ssl: process.env.NODE_ENV === "production" ? true : false
+const cloud = new Pool({
+    connectionString: process.env.CLOUD,
+    ssl: {
+        rejectUnauthorized: false
+    }
 })
+
+const local = new Pool({
+    connectionString: process.env.LOCAL
+})
+
+const pool = process.env.NODE_ENV === "production" ? cloud : local
 
 module.exports = {
     pool,
