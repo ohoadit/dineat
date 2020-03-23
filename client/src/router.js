@@ -1,10 +1,10 @@
 import Vue from "vue";
 import VueRouter from "vue-router";
-import Login from "../views/Login.vue";
-import UserDashboard from "../views/UserDashboard.vue";
-import Signup from "../views/Signup.vue";
-import Reset from "../views/Reset.vue";
-import store from "../store";
+import Login from "./views/Login.vue";
+import UserDashboard from "./views/UserDashboard.vue";
+import Signup from "./views/Signup.vue";
+import Reset from "./views/Reset.vue";
+import store from "./store";
 
 Vue.use(VueRouter);
 
@@ -40,6 +40,7 @@ const routes = [
       if (data.valid) {
         next();
         store.commit("setUser", data.user.username);
+        store.commit('sessionStarted')
       } else {
         next("/login");
       }

@@ -1,29 +1,45 @@
 <template>
   <v-app>
-    <v-app-bar fixed color="white" elevation="2">
+    <v-app-bar fixed color="secondary white--text" elevation="3">
       <v-app-bar-nav-icon
-        @click="drawer = true"
-        class="d-sm-none"
+        @click.stop="drawer = !drawer"
+         color="white"
       ></v-app-bar-nav-icon>
       <v-toolbar-title class="headline">Dineat</v-toolbar-title>
       <v-spacer></v-spacer>
-      <v-toolbar-items class="d-none d-sm-flex">
-        <v-btn text color="primary">Bookings</v-btn>
-        <v-btn text @click="logout" color="primary">Logout</v-btn>
+      <v-toolbar-items>
+        <v-btn text @click="logout" color="white">Logout</v-btn>
       </v-toolbar-items>
     </v-app-bar>
     <v-navigation-drawer
       v-model="drawer"
       absolute
       temporary
-      class="d-sm-none"
-    ></v-navigation-drawer>
+    >
+    <v-list>
+
+      <v-list-item>
+        <v-list-item-avatar>
+          <v-icon large>mdi-account-circle</v-icon>
+        </v-list-item-avatar>
+         <v-list-item-content class="headline">
+          {{ this.$store.state.sessionName}}
+      </v-list-item-content>
+      </v-list-item>
+      <v-divider></v-divider>
+        <v-list-item link>
+          <v-list-item-icon>
+            <v-icon left>mdi-book-open</v-icon>
+          </v-list-item-icon>
+          <v-list-item-content class="title font-weight-regular">
+          <v-list-item-title>
+            My bookings
+          </v-list-item-title>
+          </v-list-item-content>
+        </v-list-item>
+    </v-list>
+    </v-navigation-drawer>
     <v-container class="pa-10 mt-10">
-      <v-row justify="center">
-        <p class="headline primary--text">
-          Welcome {{ this.$store.state.sessionName }}
-        </p>
-      </v-row>
       <v-row justify="center">
       <p class="title font-weight-regular">
           Reserve a restaurant table with voice commands. Use the search
@@ -40,7 +56,6 @@
               hide-details
               solo
               clearable
-              color="pink"
               prepend-inner-icon="mdi-magnify"
               append-icon="mdi-microphone"
               @click:append="voiceSearch"
@@ -121,7 +136,7 @@
           v-for="(restaurant, index) in data"
           :key="index"
         >
-          <v-card>
+          <v-card @click="bindClick(restaurant.name)">
             <v-img :src="restaurant.image" max-height="300px"></v-img>
             <v-card-title>
               {{ restaurant.name }}
@@ -148,6 +163,7 @@ export default {
     notify: false,
     alert: false,
     drawer: false,
+    bookingDialog: false,
     data: [],
     bookWords: ["book", "book a table", "find a table", "table", "find"],
     infinite: true,
@@ -156,6 +172,7 @@ export default {
     }
   }),
   mounted() {
+    
     const recognition =
       window.webkitSpeechRecognition || window.SpeechRecognition;
     if (!recognition) {
@@ -174,11 +191,9 @@ export default {
     voices = synthesis.getVoices();
     synthesis.onvoiceschanged = async () => {
       voices = await synthesis.getVoices();
-      console.log(voices);
     };
     this.synthesis = synthesis;
     this.voice = voices[4];
-    console.log(voices);
   },
   methods: {
     dictate(toSpeak) {
@@ -261,6 +276,9 @@ export default {
     },
     getData() {
       this.data = this.$store.getters.fetchRestaurants;
+    },
+    bindClick (resName) {
+      console.log(`${resName} card clicked`)
     },
     logout() {
       this.$router.push("/login");

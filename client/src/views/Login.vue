@@ -1,6 +1,6 @@
 <template>
   <v-app>
-    <v-app-bar elevation="3" fixed color="indigo white--text">
+    <v-app-bar elevation="3" fixed color="secondary white--text">
       <v-toolbar-title class="headline">
         Dineat
       </v-toolbar-title>
