@@ -3,7 +3,7 @@
     <v-app-bar fixed color="secondary white--text" elevation="3">
       <v-app-bar-nav-icon
         @click.stop="drawer = !drawer"
-         color="white"
+        color="white"
       ></v-app-bar-nav-icon>
       <v-toolbar-title class="headline">Dineat</v-toolbar-title>
       <v-spacer></v-spacer>
@@ -11,41 +11,36 @@
         <v-btn text @click="logout" color="white">Logout</v-btn>
       </v-toolbar-items>
     </v-app-bar>
-    <v-navigation-drawer
-      v-model="drawer"
-      absolute
-      temporary
-    >
-    <v-list>
-
-      <v-list-item>
-        <v-list-item-avatar>
-          <v-icon large>mdi-account-circle</v-icon>
-        </v-list-item-avatar>
-         <v-list-item-content class="headline">
-          {{ this.$store.state.sessionName}}
-      </v-list-item-content>
-      </v-list-item>
-      <v-divider></v-divider>
+    <v-navigation-drawer v-model="drawer" absolute temporary>
+      <v-list>
+        <v-list-item>
+          <v-list-item-avatar>
+            <v-icon large>mdi-account-circle</v-icon>
+          </v-list-item-avatar>
+          <v-list-item-content class="headline">
+            {{ this.$store.state.sessionName }}
+          </v-list-item-content>
+        </v-list-item>
+        <v-divider></v-divider>
         <v-list-item link>
           <v-list-item-icon>
             <v-icon left>mdi-book-open</v-icon>
           </v-list-item-icon>
           <v-list-item-content class="title font-weight-regular">
-          <v-list-item-title>
-            My bookings
-          </v-list-item-title>
+            <v-list-item-title>
+              My bookings
+            </v-list-item-title>
           </v-list-item-content>
         </v-list-item>
-    </v-list>
+      </v-list>
     </v-navigation-drawer>
     <v-container class="pa-10 mt-10">
       <v-row justify="center">
-      <p class="title font-weight-regular">
-          Reserve a restaurant table with voice commands. Use the search
-          feature to explore.
+        <p class="title font-weight-regular">
+          Reserve a restaurant table with voice commands. Use the search feature
+          to explore.
         </p>
-        </v-row>
+      </v-row>
       <v-row justify="center" class="mb-5">
         <v-col cols="12" xs="12" sm="10" md="9">
           <v-form ref="form" @submit.prevent="textSearch">
@@ -85,48 +80,49 @@
       <v-row justify="center">
         <v-btn color="primary" @click="getData">Find Manually</v-btn>
       </v-row>
-      
+
       <v-dialog
         class="mt-10 subtitle font-weight-regular"
         v-model="alert"
         max-width="500px"
       >
-      <v-card tile color="orange lighten-1 white--text">
-        <v-card-title>
-          Alert
-        </v-card-title>
-        <v-card-text class="white--text title font-weight-regular"> 
-          <p>
-          Google chrome is recommended for voice search. However, Dineat's voice
-          feature works fine on firefox too.
-        </p>
-        <p>
-          In case you are using Firefox, you need to activate certain flags.
-        </p>
-        <p>For that</p>
-        <ol>
-          <li>
-            Open a new tab in firefox and type about:config in the URL box and
-            click Accept the risk and continue if on desktop.
-          </li>
-          <li>
-            Now in the search preference name type
-            media.webspeech.recognition.enable and set it to true it by clicking
-            toggle.
-          </li>
-          <li>
-            Same procedure for media.webspeech.recognition.force_enable and
-            media.webspeech.synth.enabled.
-          </li>
-        </ol></v-card-text>
-        <v-card-actions>
-        <v-spacer></v-spacer>
-          <v-btn @click="alert=false">Dismiss</v-btn>
-          <v-spacer></v-spacer>
-        </v-card-actions>
-      </v-card>
+        <v-card tile color="orange lighten-1 white--text">
+          <v-card-title>
+            Alert
+          </v-card-title>
+          <v-card-text class="white--text title font-weight-regular">
+            <p>
+              Google chrome is recommended for voice search. However, Dineat's
+              voice feature works fine on firefox too.
+            </p>
+            <p>
+              In case you are using Firefox, you need to activate certain flags.
+            </p>
+            <p>For that</p>
+            <ol>
+              <li>
+                Open a new tab in firefox and type about:config in the URL box
+                and click Accept the risk and continue if on desktop.
+              </li>
+              <li>
+                Now in the search preference name type
+                media.webspeech.recognition.enable and set it to true it by
+                clicking toggle.
+              </li>
+              <li>
+                Same procedure for media.webspeech.recognition.force_enable and
+                media.webspeech.synth.enabled.
+              </li>
+            </ol></v-card-text
+          >
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn @click="alert = false">Dismiss</v-btn>
+            <v-spacer></v-spacer>
+          </v-card-actions>
+        </v-card>
       </v-dialog>
-      
+
       <v-row class="mt-10">
         <v-col
           cols="12"
@@ -136,18 +132,50 @@
           v-for="(restaurant, index) in data"
           :key="index"
         >
-          <v-card @click="bindClick(restaurant.name)">
-            <v-img :src="restaurant.image" max-height="300px"></v-img>
-            <v-card-title>
-              {{ restaurant.name }}
-            </v-card-title>
-            <v-card-text class="subtitle">
-              <v-icon>mdi-map-marker</v-icon>{{ restaurant.location }}
-            </v-card-text>
-          </v-card>
+          <v-hover v-slot:default="{ hover }">
+            <v-card
+              @click="bindClick(restaurant)"
+              tile
+              :elevation="hover ? 10 : 2"
+            >
+              <v-img :src="restaurant.image" max-height="300px"></v-img>
+              <v-card-title>
+                {{ restaurant.name }}
+              </v-card-title>
+              <v-card-text class="subtitle">
+                <div>
+                  <v-icon>mdi-map-marker</v-icon>
+                  {{ restaurant.location }}
+                </div>
+              </v-card-text>
+            </v-card>
+          </v-hover>
         </v-col>
       </v-row>
+      <v-dialog
+            v-model="bookingDialog"
+            fullscreen
+            transition="dialog-bottom-transition"
+          >
+            <v-card tile>
+              <v-toolbar color=" white--text">
+                <v-btn icon @click="bookingDialog = false" color="white"
+                  ><v-icon>mdi-close</v-icon></v-btn
+                >
+                <v-toolbar-title>Please Enter your details</v-toolbar-title>
+              </v-toolbar>
+
+              <v-row justify="center">
+                <v-col>
+                  <v-text-field label="Name">
+                    
+                  </v-text-field>
+                </v-col>
+              </v-row>
+            </v-card>
+          </v-dialog>
     </v-container>
+    {{ loadRestaurants }}
   </v-app>
 </template>
 
@@ -172,7 +200,6 @@ export default {
     }
   }),
   mounted() {
-    
     const recognition =
       window.webkitSpeechRecognition || window.SpeechRecognition;
     if (!recognition) {
@@ -194,6 +221,11 @@ export default {
     };
     this.synthesis = synthesis;
     this.voice = voices[4];
+  },
+  computed: {
+    loadRestaurants() {
+      this.data = this.$store.getters.fetchRestaurants;
+    }
   },
   methods: {
     dictate(toSpeak) {
@@ -264,7 +296,6 @@ export default {
 
     textSearch() {
       if (this.speech === "") {
-        console.log("Returned");
         return;
       }
       this.data = this.$store.getters.searchRestaurant(this.speech);
@@ -277,8 +308,9 @@ export default {
     getData() {
       this.data = this.$store.getters.fetchRestaurants;
     },
-    bindClick (resName) {
-      console.log(`${resName} card clicked`)
+    bindClick(hotel) {
+      this.bookingDialog = true;
+      console.log(`${hotel.name} card clicked`);
     },
     logout() {
       this.$router.push("/login");

@@ -1,6 +1,6 @@
 import Vue from "vue";
 import Vuex from "vuex";
-import router from './router';
+import router from "./router";
 
 Vue.use(Vuex);
 
@@ -10,7 +10,7 @@ const store = new Vuex.Store({
     resMin: [],
     restaurants: [
       {
-        name: "Spicy Sizzlers",
+        name: "React Sizzlers",
         cuisines: "Italian | Continental | Chinese | Sizzlers | Paneer",
         image:
           "https://im1.dineout.co.in/images/uploads/restaurant/sharpen/3/m/w/p37920-15270679725b053544d7e5b.jpg",
@@ -39,10 +39,28 @@ const store = new Vuex.Store({
       },
       {
         name: "Companion",
-        cuisines: "South Indian | Dosa | Idli | Handva",
+        cuisines: "South Indian | Dosa | Idli | Handva | Coffee",
         image:
-          "https://images.pexels.com/photos/2290753/pexels-photo-2290753.jpeg",
+          "https://cdn.pixabay.com/photo/2018/08/10/21/52/restaurant-3597677_960_720.jpg",
         location: "Prahlad Nagar"
+      },
+      {
+        name: "Cafe Piano",
+        cuisines: "Continental | Italian | Cafe | Bar | Fastfood",
+        image: "https://cdn.pixabay.com/photo/2015/05/31/11/23/table-791167_960_720.jpg",
+        location: "Satellite"
+      },
+      {
+        name: "Royal Dining",
+        cuisines: "Gujarati Thali |  ",
+        image: "https://images.pexels.com/photos/262047/pexels-photo-262047.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        location: "Vastrapur"
+      },
+      {
+        name: "Vue Cafe",
+        cuisines: "Cafe | Tea | Coffee | Fastfood | Pizza",
+        image: "https://images.pexels.com/photos/67468/pexels-photo-67468.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        location: "CG Road"
       }
     ]
   },
@@ -51,41 +69,58 @@ const store = new Vuex.Store({
     setUser(state, name) {
       state.sessionName = name;
     },
-    minifier (state) {
+
+    minifier(state) {
       if (state.resMin.length) {
-        return
+        return;
       }
-       state.restaurants.forEach( restaurant => {
-         let combined = ""
-         for (const prop in restaurant) {
-           combined += restaurant[prop]
-         }
-         state.resMin.push(combined.replace(/\s+/g,''))
-       })
+      state.restaurants.forEach(restaurant => {
+        let combined = "";
+        for (const prop in restaurant) {
+          combined += restaurant[prop];
+        }
+        state.resMin.push(combined.replace(/\s+/g, "").toLowerCase());
+      });
     },
-    sessionStarted (state) {
-      const check = setInterval( () => {
-        document.cookie.split(';').forEach( cookie => {
-          if(!cookie.includes('Dineat=')) {
-            state.sessionName = ''
-            router.push('/login')
-            clearInterval(check)
-          }         
-        })
-      }, 1000)
+
+    sessionStarted(state) {
+      const check = setInterval(() => {
+        document.cookie.split(";").forEach(cookie => {
+          if (!cookie.includes("Dineat=")) {
+            console.log("This")
+            router.push("/login");
+            clearInterval(check);
+          }
+        });
+      }, 1000);
+    },
+
+    sessionEnded(state) {
+      state.sessionName = "";
     }
   },
+
   getters: {
+
     fetchRestaurants(state) {
       return state.restaurants;
     },
+
     searchRestaurant: state => sentence => {
-      store.commit('minifier')
-      
-      return state.restaurants.filter(
-        restaurant => sentence === restaurant.location.toLowerCase()
-      );
-    },
+      store.commit("minifier");
+      let lexicons = sentence.split(" ").filter(token => token.length >= 3);
+      let arr = []
+      lexicons.forEach( lexicon => {
+        state.resMin.forEach( (restaurant, index) => {
+          if (restaurant.includes(lexicon)) {
+            if (!arr.includes(index)) {
+              arr.push(state.restaurants[index])
+            }
+          }
+        })
+      });
+      return arr
+    }
   },
   actions: {},
   modules: {}

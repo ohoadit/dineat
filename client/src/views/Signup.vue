@@ -3,16 +3,16 @@
     <v-content>
       <v-img src=""></v-img>
     <v-row justify="center" class="mt-10">
-      <v-col cols="10" xs="10" sm="8" md="6" class="mt-10">
+      <v-col cols="11" xs="11" sm="8" md="6" class="mt-10">
       <v-progress-linear indeterminate :active="showProgress" color="primary lighten-2"></v-progress-linear>
       <v-card
         max-height="500px"
         tile
         elevation="5"
       >
-      <v-toolbar elevation="3" class="indigo white--text"><v-toolbar-title class="headline">Dineat</v-toolbar-title></v-toolbar>
-        <v-card-title class="subtitle pl-5 font-weight-regular">Registration</v-card-title>
-        <v-card-text class="">
+      <v-toolbar elevation="3" class="secondary white--text"><v-toolbar-title class="headline">Dineat</v-toolbar-title></v-toolbar>
+        <v-card-title class="subtitle font-weight-regular">Registration</v-card-title>
+        <v-card-text>
           <v-form ref="form" @submit.prevent="onSubmit">
             <v-text-field
               autofocus
@@ -21,7 +21,7 @@
               :value="email"
               name="email"
               :rules="[rules.isEmpty, rules.email]"
-              prepend-icon="mdi-email-outline"
+              validate-on-blur
             >
             </v-text-field>
         
@@ -61,7 +61,7 @@ export default {
       isEmpty: v => !!v || "Should not be empty",
       email: v => {
         const rex = /^[a-zA-Z0-9](\.?[a-zA-Z0-9]){5,}@(g(oogle)?mail\.com|iite\.indusuni\.ac\.in)$/
-        return rex.test(v) || "Invalid Email";
+        return rex.test(v) || "Invalid email id";
       }
     }
   }),
