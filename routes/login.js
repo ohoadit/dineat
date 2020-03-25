@@ -20,7 +20,7 @@ loginRouter.post("/", async (req, res, next) => {
               expires: new Date(Date.now() + 1800000),
               maxAge: 1800000
             });
-            res.send({ matched: true, msg: "Granted" });
+            res.send({ matched: true, msg: "Granted", admin: req.body.username === 'feedbackloop08' ? true : false });
           } else {
             res.status(401).json({
               matched: false,

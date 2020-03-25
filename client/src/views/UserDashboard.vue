@@ -15,10 +15,10 @@
       <v-list>
         <v-list-item>
           <v-list-item-avatar>
-            <v-icon large>mdi-account-circle</v-icon>
+            <v-avatar color="yellow" size="48"><span>A</span></v-avatar>
           </v-list-item-avatar>
           <v-list-item-content class="headline">
-            {{ this.$store.state.sessionName }}
+            {{ this.$store.state.user.username }}
           </v-list-item-content>
         </v-list-item>
         <v-divider></v-divider>
@@ -153,27 +153,20 @@
         </v-col>
       </v-row>
       <v-dialog
-            v-model="bookingDialog"
-            fullscreen
-            transition="dialog-bottom-transition"
-          >
-            <v-card tile>
-              <v-toolbar color=" white--text">
-                <v-btn icon @click="bookingDialog = false" color="white"
-                  ><v-icon>mdi-close</v-icon></v-btn
-                >
-                <v-toolbar-title>Please Enter your details</v-toolbar-title>
-              </v-toolbar>
-
-              <v-row justify="center">
-                <v-col>
-                  <v-text-field label="Name">
-                    
-                  </v-text-field>
-                </v-col>
-              </v-row>
-            </v-card>
-          </v-dialog>
+        v-model="bookingDialog"
+        fullscreen
+        transition="dialog-bottom-transition"
+      >
+        <v-card tile>
+          <v-toolbar color="secondary white--text">
+            <v-btn icon @click="bookingDialog = false" color="white"
+              ><v-icon>mdi-close</v-icon></v-btn
+            >
+            <v-toolbar-title>Please Enter your details</v-toolbar-title>
+          </v-toolbar>
+          <v-text-field label="Name"> </v-text-field>
+        </v-card>
+      </v-dialog>
     </v-container>
     {{ loadRestaurants }}
   </v-app>
@@ -188,7 +181,7 @@ export default {
     voice: null,
     speech: "",
     voiceDialog: false,
-    notify: false,
+    voiceModule: false,
     alert: false,
     drawer: false,
     bookingDialog: false,
@@ -203,7 +196,7 @@ export default {
     const recognition =
       window.webkitSpeechRecognition || window.SpeechRecognition;
     if (!recognition) {
-      this.notify = true;
+      this.voiceModule = true;
       return;
     }
     let recognize = new recognition();
@@ -281,8 +274,9 @@ export default {
 
     async voiceSearch() {
       try {
-        if (this.notify) {
+        if (this.voiceModule) {
           this.alert = true;
+          return;
         }
         const result = await this.startCapturing(this.recognize);
         this.speech = result;
@@ -298,12 +292,9 @@ export default {
       if (this.speech === "") {
         return;
       }
-      this.data = this.$store.getters.searchRestaurant(this.speech);
-    },
-    loadRandom() {
-      const num = Math.floor(Math.random() * 5);
-      this.data = this.$store.getters.fetchRestaurants;
-      this.data = [this.data[num]];
+      this.data = this.$store.getters.searchRestaurant(
+        this.speech.toLowerCase()
+      );
     },
     getData() {
       this.data = this.$store.getters.fetchRestaurants;

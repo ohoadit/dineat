@@ -3,7 +3,7 @@
     <v-row justify="center" class="mt-10"> 
       <v-col cols="10" xs="10" sm="8" md="6" class="mt-10">
       <v-card tile elevation="5">
-        <v-toolbar color="indigo white--text">
+        <v-toolbar color="secondary white--text">
           <v-toolbar-title class="headline">
             Dineat
           </v-toolbar-title>

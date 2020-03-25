@@ -25,7 +25,7 @@ const routes = [
     beforeEnter: async (to, from, next) => {
       const data = await isAuthenticated();
       if (data.valid) {
-        next("/dashboard");
+        data.admin ? next('/admin') : next("/dashboard");
       } else {
         next();
       }
@@ -38,8 +38,8 @@ const routes = [
     beforeEnter: async (to, from, next) => {
       const data = await isAuthenticated();
       if (data.valid) {
-        next();
-        store.commit("setUser", data.user.username);
+        data.admin ? next('/admin') : next();
+        store.commit("setUser", { username: data.user.username, cookie: document.cookie});
         store.commit('sessionStarted')
       } else {
         next("/login");
@@ -50,13 +50,13 @@ const routes = [
     path: "/register",
     name: "Signup",
     component: Signup,
-    beforeEnter: (to, from, next) => {
-      fetch("/bank", {
-        method: "GET",
-        credentials: "same-origin"
-      })
-        .then(res => res.json())
-        .then(res => (res.valid ? next("/dashboard") : next()));
+    beforeEnter: async (to, from, next) => {
+      const data = await isAuthenticated()
+      if (data.valid) {
+        data.admin ? next('/admin') : next('/dashboard')
+      } else {
+        next()
+      }
     }
   },
   {

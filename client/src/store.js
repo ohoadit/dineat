@@ -6,7 +6,10 @@ Vue.use(Vuex);
 
 const store = new Vuex.Store({
   state: {
-    sessionName: "",
+    user: {
+      username: "",
+      cookie: ""
+    },
     resMin: [],
     restaurants: [
       {
@@ -47,27 +50,29 @@ const store = new Vuex.Store({
       {
         name: "Cafe Piano",
         cuisines: "Continental | Italian | Cafe | Bar | Fastfood",
-        image: "https://cdn.pixabay.com/photo/2015/05/31/11/23/table-791167_960_720.jpg",
+        image:
+          "https://cdn.pixabay.com/photo/2015/05/31/11/23/table-791167_960_720.jpg",
         location: "Satellite"
       },
       {
         name: "Royal Dining",
         cuisines: "Gujarati Thali |  ",
-        image: "https://images.pexels.com/photos/262047/pexels-photo-262047.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        image:
+          "https://images.pexels.com/photos/262047/pexels-photo-262047.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
         location: "Vastrapur"
       },
       {
         name: "Vue Cafe",
         cuisines: "Cafe | Tea | Coffee | Fastfood | Pizza",
-        image: "https://images.pexels.com/photos/67468/pexels-photo-67468.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        image:
+          "https://images.pexels.com/photos/67468/pexels-photo-67468.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
         location: "CG Road"
       }
     ]
   },
   mutations: {
-
-    setUser(state, name) {
-      state.sessionName = name;
+    setUser(state, payload) {
+      Object.assign(state.user, payload)
     },
 
     minifier(state) {
@@ -85,13 +90,13 @@ const store = new Vuex.Store({
 
     sessionStarted(state) {
       const check = setInterval(() => {
-        document.cookie.split(";").forEach(cookie => {
-          if (!cookie.includes("Dineat=")) {
-            console.log("This")
-            router.push("/login");
-            clearInterval(check);
+        if (document.cookie !== state.user.cookie) {
+          if (router.currentRoute.name !== "Login") {
+              router.push("/login").catch(err => console.log(err))
           }
-        });
+          document.cookie = ''
+          clearInterval(check);
+        }
       }, 1000);
     },
 
@@ -101,25 +106,24 @@ const store = new Vuex.Store({
   },
 
   getters: {
-
     fetchRestaurants(state) {
       return state.restaurants;
     },
 
     searchRestaurant: state => sentence => {
       store.commit("minifier");
-      let lexicons = sentence.split(" ").filter(token => token.length >= 3);
-      let arr = []
-      lexicons.forEach( lexicon => {
-        state.resMin.forEach( (restaurant, index) => {
+      const lexicons = sentence.split(" ").filter(token => token.length >= 3);
+      const arr = [];
+      lexicons.forEach(lexicon => {
+        state.resMin.forEach((restaurant, index) => {
           if (restaurant.includes(lexicon)) {
             if (!arr.includes(index)) {
-              arr.push(state.restaurants[index])
+              arr.push(state.restaurants[index]);
             }
           }
-        })
+        });
       });
-      return arr
+      return arr;
     }
   },
   actions: {},

@@ -136,8 +136,8 @@ export default {
       });
       let res = await response.json();
       if (res.matched) {
-        this.$router.push('/dashboard')
-        this.$store.commit('setUser', this.username)
+        res.admin ? this.$router.push('/admin') : this.$router.push('/dashboard')
+        this.$store.commit('setUser', { username: this.username, cookie: document.cookie})
       } else {
         this[res.field] = res.msg
       }
