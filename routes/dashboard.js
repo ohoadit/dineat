@@ -8,7 +8,7 @@ dashboardRouter.get('/', (req, res, next) => {
   jwt.verify(set, process.env.LOB, (err, payload) => {
     console.log(payload)
     if (!err) {
-      return res.json({valid: true, user: payload, admin: payload === 'feedbackloop08' ? true : false})
+      return res.json({valid: true, user: payload, admin: payload.username === 'feedbackloop08' ? true : false})
     } else {
       return res.json({valid: false})
     }

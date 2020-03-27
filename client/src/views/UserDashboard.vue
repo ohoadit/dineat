@@ -1,6 +1,6 @@
 <template>
   <v-app>
-    <v-app-bar fixed color="secondary white--text" elevation="3">
+    <v-app-bar fixed elevation="3" color="secondary white--text">
       <v-app-bar-nav-icon
         @click.stop="drawer = !drawer"
         color="white"
@@ -77,10 +77,6 @@
           </v-card>
         </v-dialog>
       </v-row>
-      <v-row justify="center">
-        <v-btn color="primary" @click="getData">Find Manually</v-btn>
-      </v-row>
-
       <v-dialog
         class="mt-10 subtitle font-weight-regular"
         v-model="alert"
@@ -123,7 +119,7 @@
         </v-card>
       </v-dialog>
 
-      <v-row class="mt-10">
+      <v-row class="mt-10" justify="center">
         <v-col
           cols="12"
           xs="12"
@@ -158,13 +154,24 @@
         transition="dialog-bottom-transition"
       >
         <v-card tile>
-          <v-toolbar color="secondary white--text">
-            <v-btn icon @click="bookingDialog = false" color="white"
+          <v-toolbar>
+            <v-btn icon @click="bookingDialog = false" color="primary"
               ><v-icon>mdi-close</v-icon></v-btn
             >
-            <v-toolbar-title>Please Enter your details</v-toolbar-title>
+            <v-toolbar-title>{{ currentBooking.name }}</v-toolbar-title>
+            <v-spacer></v-spacer>
+            <v-btn text color="primary">Save</v-btn>
           </v-toolbar>
-          <v-text-field label="Name"> </v-text-field>
+          <v-row justify="center">
+            <v-col cols="12" xs="10" sm="6" md="5">
+              <v-card  elevation="5">
+              <v-img :src="currentBooking.image" max-height="400px"/>
+              </v-card>
+            </v-col>
+            <v-col cols="12" xs="10" sm="6" md="5">
+              <v-text-field label="Name"></v-text-field>
+            </v-col>
+          </v-row>
         </v-card>
       </v-dialog>
     </v-container>
@@ -185,6 +192,7 @@ export default {
     alert: false,
     drawer: false,
     bookingDialog: false,
+    currentBooking: {},
     data: [],
     bookWords: ["book", "book a table", "find a table", "table", "find"],
     infinite: true,
@@ -301,6 +309,7 @@ export default {
     },
     bindClick(hotel) {
       this.bookingDialog = true;
+      this.currentBooking = hotel;
       console.log(`${hotel.name} card clicked`);
     },
     logout() {

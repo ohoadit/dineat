@@ -6,7 +6,7 @@
       </v-toolbar-title>
       <v-spacer></v-spacer>
       <v-toolbar-items>
-        <v-btn text to="/register" color="white">Signup</v-btn>
+        <v-btn text color="white" to="/register"><v-icon left>mdi-account-plus</v-icon> Signup</v-btn>
       </v-toolbar-items>
     </v-app-bar>
     <v-content v-if="this.$vuetify.breakpoint.xsOnly">

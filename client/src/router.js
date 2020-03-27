@@ -5,6 +5,7 @@ import UserDashboard from "./views/UserDashboard.vue";
 import Signup from "./views/Signup.vue";
 import Reset from "./views/Reset.vue";
 import store from "./store";
+import Admin from "./views/Admin.vue"
 
 Vue.use(VueRouter);
 
@@ -43,6 +44,21 @@ const routes = [
         store.commit('sessionStarted')
       } else {
         next("/login");
+      }
+    }
+  },
+  {
+    path: "/admin",
+    name: "Admin",
+    component: Admin,
+    beforeEnter: async (to, from, next) => {
+      const data = await isAuthenticated()
+      if (data.valid) {
+        data.admin ? next() : next('/dashboard')
+        store.commit('setUser', { username: data.user.username, cookie: document.cookie});
+        store.commit('sessionStarted')
+      } else {
+        next('/login');
       }
     }
   },

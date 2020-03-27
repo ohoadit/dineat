@@ -71,11 +71,12 @@ const store = new Vuex.Store({
     ]
   },
   mutations: {
-    setUser(state, payload) {
+    setUser (state, payload) {
+      console.log(payload)
       Object.assign(state.user, payload)
     },
 
-    minifier(state) {
+    minifier (state) {
       if (state.resMin.length) {
         return;
       }
@@ -88,25 +89,24 @@ const store = new Vuex.Store({
       });
     },
 
-    sessionStarted(state) {
+    sessionStarted (state) {
       const check = setInterval(() => {
         if (document.cookie !== state.user.cookie) {
           if (router.currentRoute.name !== "Login") {
               router.push("/login").catch(err => console.log(err))
           }
-          document.cookie = ''
           clearInterval(check);
         }
       }, 1000);
     },
 
-    sessionEnded(state) {
-      state.sessionName = "";
+    sessionEnded (state) {
+      Object.assign(state.user, {username: '', cookie: ''})
     }
   },
 
   getters: {
-    fetchRestaurants(state) {
+    fetchRestaurants (state) {
       return state.restaurants;
     },
 
@@ -129,5 +129,7 @@ const store = new Vuex.Store({
   actions: {},
   modules: {}
 });
+
+console.log(store.state.user)
 
 export default store;
