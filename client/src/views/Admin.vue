@@ -1,24 +1,24 @@
 <template>
   <v-app>
-    <v-app-bar color="secondary white--text" fixed>
+    <v-app-bar fixed color="white">
       <v-toolbar-title class="headline">Dineat</v-toolbar-title>
       <v-spacer></v-spacer>
       <v-toolbar-items>
-        <v-btn text color="white" @click="logout">
+        <v-btn text @click="logout" color="primary">
           <v-icon left>mdi-logout</v-icon>
           Logout
         </v-btn>
       </v-toolbar-items>
       <template v-slot:extension>
         <v-tabs v-model="active" fixed-tabs>
-          <v-tabs-slider color="white"></v-tabs-slider>
+          <v-tabs-slider></v-tabs-slider>
           <v-tab
-            class="white--text"
             v-for="(tab, i) in tabs"
             :key="i"
             :href="tab.link"
             @click="caller(tab.call)"
           >
+            <v-icon left>{{ tab.icon }}</v-icon>
             {{ tab.name }}
           </v-tab>
         </v-tabs>
@@ -63,6 +63,11 @@
       <v-lazy>
         <v-tab-item id="users">
           <v-container class="container">
+            <v-progress-linear
+              color="primary"
+              indeterminate
+              :active="!userData.length"
+            ></v-progress-linear>
             <v-row justify="center">
               <v-col cols="12" xs="10">
                 <v-card
@@ -71,16 +76,19 @@
                   :key="i"
                   @click="randomConsoleFunction(user)"
                 >
-                  <v-card-text class="title font-weight-regular">
-                    <div class="primary">
+                  <v-card-text>
+                    <div class="wrapper">
                       <div>
-                        {{ user.name }}
+                        {{ user.username }}
                       </div>
                       <div>
-                        {{ user.time }}
+                        {{ user.registration }}
                       </div>
                       <div>
                         {{ user.status }}
+                      </div>
+                      <div>
+                        <v-btn raised color="red lighten-1 white--text">Delete</v-btn>
                       </div>
                     </div>
                   </v-card-text>
@@ -106,12 +114,14 @@ export default {
       {
         link: "#manager",
         name: "Restaurants",
-        call: ""
+        call: "",
+        icon: "mdi-silverware-fork-knife"
       },
       {
         link: "#users",
         name: "Users",
-        call: "fetchUsers"
+        call: "fetchUsers",
+        icon: "mdi-account"
       }
     ],
     resTableHeaders: [
@@ -142,32 +152,24 @@ export default {
     }
   },
   methods: {
-    caller (name) {
-      if (!name === '') {
-        this[name]()
+    caller(name) {
+      if (name === "") {
+        return;
       }
+      this[name]();
     },
-    fetchUsers() {
-      setTimeout(() => {
-        this.userData = [
-        {
-          name: "Tissot",
-          time: Date.now().toString(),
-          status: "Registered"
+    async fetchUsers() {
+      const records = await fetch("/master/records", {
+        method: "POST",
+        headers: {
+          'Accept': "Application/JSON",          
         },
-        {
-          name: "Mido",
-          time: Date.now().toLocaleString(),
-          status: "Link Sent"
-        },
-        {
-          name: "Kenzo",
-          time: Date.now().toLocaleString(),
-          status: "Link Expired"
-        }
-      ];
-      }, 5000)
-      
+        credentials: "same-origin"
+      });
+      const getUsers = await records.json()
+      if (getUsers.valid) {
+        this.userData = getUsers.users
+      }
     },
     randomConsoleFunction(data) {
       console.log(data);
@@ -185,5 +187,23 @@ export default {
 <style scoped>
 .container {
   margin-top: 120px;
+}
+.wrapper {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  font-size: 20px;
+  color: #000;
+}
+.wrapper > div {
+  flex: 1
+}
+@media screen and (max-width: 600px) {
+  .wrapper {
+    flex-direction: column;
+  }
+  .wrapper div {
+    margin-top: 10px;
+  }
 }
 </style>
