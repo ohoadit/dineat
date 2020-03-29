@@ -72,7 +72,6 @@ const store = new Vuex.Store({
   },
   mutations: {
     setUser (state, payload) {
-      console.log(payload)
       Object.assign(state.user, payload)
     },
 
@@ -130,6 +129,5 @@ const store = new Vuex.Store({
   modules: {}
 });
 
-console.log(store.state.user)
 
 export default store;

@@ -12,30 +12,47 @@
       <template v-slot:extension>
         <v-tabs v-model="active" fixed-tabs>
           <v-tabs-slider color="white"></v-tabs-slider>
-          <v-tab class="white--text" href="#manager">
-            Restaurants
-          </v-tab>
-          <v-tab class="white--text" href="#users">
-            Users
-          </v-tab>
-          <v-tab class="white--text" href="#tab-3">
-            Tab-3
+          <v-tab
+            class="white--text"
+            v-for="(tab, i) in tabs"
+            :key="i"
+            :href="tab.link"
+            @click="caller(tab.call)"
+          >
+            {{ tab.name }}
           </v-tab>
         </v-tabs>
       </template>
     </v-app-bar>
-    <v-tabs-items v-model="active">
-      <v-tab-item id="manager" class="wrapper">
+    <v-tabs-items v-model="active" class="transparent">
+      <v-tab-item id="manager">
         <v-container class="container">
           <v-row justify="center">
             <v-col cols="12" xs="11">
               <v-data-table
-                :headers="columnTitle"
-                :items="data"
-                items-per-page="5"
+                hide-default-header
+                :headers="resTableHeaders"
+                :items="restaurantData"
+                :items-per-page="7"
+                class="elevation-10"
+                disable-sort
               >
-                {{ loadRestaurants }}
+                <template
+                  v-slot:header="{ props }"
+                  v-if="!this.$vuetify.breakpoint.xsOnly"
+                >
+                  <tr>
+                    <td
+                      v-for="(title, i) in props.headers"
+                      :key="i"
+                      class="grey--text text--darken-2 title"
+                    >
+                      {{ title.text }}
+                    </td>
+                  </tr>
+                </template>
               </v-data-table>
+              {{ fetchRestaurants }}
             </v-col>
           </v-row>
           <v-btn fab bottom right color="primary" class="mr-5 mb-5" fixed
@@ -44,13 +61,30 @@
         </v-container>
       </v-tab-item>
       <v-lazy>
-        <v-tab-item id="users" class="blue-grey lighten-5">
+        <v-tab-item id="users">
           <v-container class="container">
             <v-row justify="center">
               <v-col cols="12" xs="10">
-                <v-card>
-                  <v-card-title class="title font-weight-regular">
-                  </v-card-title>
+                <v-card
+                  tile
+                  v-for="(user, i) in userData"
+                  :key="i"
+                  @click="randomConsoleFunction(user)"
+                >
+                  <v-card-text class="title font-weight-regular">
+                    <div class="primary">
+                      <div>
+                        {{ user.name }}
+                      </div>
+                      <div>
+                        {{ user.time }}
+                      </div>
+                      <div>
+                        {{ user.status }}
+                      </div>
+                    </div>
+                  </v-card-text>
+                  <v-divider></v-divider>
                 </v-card>
               </v-col>
             </v-row>
@@ -67,11 +101,22 @@ import Login from "./Login";
 export default {
   name: "Admin",
   data: () => ({
-    active: "tab-1",
-    data: [],
-    columnTitle: [
+    active: null,
+    tabs: [
       {
-        text: "Restaurant name",
+        link: "#manager",
+        name: "Restaurants",
+        call: ""
+      },
+      {
+        link: "#users",
+        name: "Users",
+        call: "fetchUsers"
+      }
+    ],
+    resTableHeaders: [
+      {
+        text: "Name",
         value: "name"
       },
       {
@@ -82,14 +127,51 @@ export default {
         text: "Location",
         value: "location"
       }
-    ]
+    ],
+    userTableHeaders: [
+      {
+        text: "Username"
+      }
+    ],
+    restaurantData: [],
+    userData: []
   }),
   computed: {
-    loadRestaurants() {
-      this.data = this.$store.getters.fetchRestaurants;
+    fetchRestaurants() {
+      this.restaurantData = this.$store.getters.fetchRestaurants;
     }
   },
   methods: {
+    caller (name) {
+      if (!name === '') {
+        this[name]()
+      }
+    },
+    fetchUsers() {
+      setTimeout(() => {
+        this.userData = [
+        {
+          name: "Tissot",
+          time: Date.now().toString(),
+          status: "Registered"
+        },
+        {
+          name: "Mido",
+          time: Date.now().toLocaleString(),
+          status: "Link Sent"
+        },
+        {
+          name: "Kenzo",
+          time: Date.now().toLocaleString(),
+          status: "Link Expired"
+        }
+      ];
+      }, 5000)
+      
+    },
+    randomConsoleFunction(data) {
+      console.log(data);
+    },
     logout() {
       this.$router.push("/login");
       document.cookie =
@@ -102,9 +184,6 @@ export default {
 
 <style scoped>
 .container {
-  margin-top: 100px;
-}
-.wrapper {
-  background-color: #f6f7f9;
+  margin-top: 120px;
 }
 </style>
