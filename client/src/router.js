@@ -2,7 +2,6 @@ import Vue from "vue";
 import VueRouter from "vue-router";
 import Login from "./views/Login.vue";
 import UserDashboard from "./views/UserDashboard.vue";
-import Signup from "./views/Signup.vue";
 import Reset from "./views/Reset.vue";
 import store from "./store";
 import Admin from "./views/Admin.vue"
@@ -59,19 +58,6 @@ const routes = [
         store.commit('sessionStarted')
       } else {
         next('/login');
-      }
-    }
-  },
-  {
-    path: "/register",
-    name: "Signup",
-    component: Signup,
-    beforeEnter: async (to, from, next) => {
-      const data = await isAuthenticated()
-      if (data.valid) {
-        data.admin ? next('/admin') : next('/dashboard')
-      } else {
-        next()
       }
     }
   },

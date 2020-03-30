@@ -95,6 +95,10 @@ admitRouter.post("/enroll", async (req, res, next) => {
 admitRouter.post("/register", async (req, res) => {
   try {
     const email = req.body.email;
+    const rex = /^[a-zA-Z0-9](\.?[a-zA-Z0-9]){5,}@(g(oogle)?mail\.com|iite\.indusuni\.ac\.in)$/
+    if (!rex.test(email)) {
+      return res.json({sent: false, field: 'emailError', msg: "Invalid email. Use gmail/college id"})
+    }
     const user = email.split("@")[0];
     const check = await pool.query(
       "select * from authorized where username = $1",
@@ -114,7 +118,7 @@ admitRouter.post("/register", async (req, res) => {
     }
   } catch (err) {
     console.log(err);
-    return res.status(500).json(err);
+    return res.status(500).json({msg: "Internal Server Error", sent: false});
   }
 });
 
@@ -133,7 +137,7 @@ const mailer = (res, email, setter) => {
         broken({ msg: "Email not sent due to an error :/", sent: false});
       } else {
         console.log(result);
-        res.json({ msg: "An email with the password setter link has been sent to your email.", sent: true });
+        res.json({ msg: "An email with the password setter link has been sent to your address.", sent: true });
         kept("Email sent successfully")
       }
       transporter.close();
