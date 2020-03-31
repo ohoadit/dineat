@@ -68,7 +68,7 @@
           <v-progress-linear
             color="primary"
             indeterminate
-            :active="!userData.length"
+            :active="grep"
           ></v-progress-linear>
           <v-data-table
             :headers="userTableHeaders"
@@ -92,7 +92,7 @@
               <v-btn color="red lighten-1" icon @click="deleteUser(item)"
                 ><v-icon>mdi-trash-can-outline</v-icon></v-btn
               >
-              <v-btn color="primary" icon
+              <v-btn color="primary" icon @click="resetUser(item)"
                 ><v-icon>mdi-lock-reset</v-icon></v-btn
               >
             </template>
@@ -100,7 +100,7 @@
         </v-container>
       </v-tab-item>
     </v-tabs-items>
-    <v-snackbar v-model="snackbar" :color="color" :timeout="timeout" style="text-align: center;">{{
+    <v-snackbar v-model="snackbar" :color="color" :timeout="timeout">{{
       message}}</v-snackbar>
   </v-app>
 </template>
@@ -163,9 +163,10 @@ export default {
     ],
     restaurantData: [],
     userData: [],
-    snackbar: true,
+    grep: false,
+    snackbar: false,
     timeout: 7000,
-    message: "This is Tony Stark from Titan",
+    message: "",
     color: "",
   }),
   computed: {
@@ -205,6 +206,7 @@ export default {
       }
     },
     async deleteUser(userinfo) {
+      this.grep = true
       const res = await fetch('/master/remove', {
         method: "POST",
         headers: {
@@ -221,14 +223,37 @@ export default {
       if (reply.valid && reply.dtd) {
         this.color = "teal accent-4";
         this.snackbar = true;
-        console.time("Deletion")
         this.userData = this.userData.filter(user => user.username !== userinfo.username)
-        console.timeEnd("Deletion")
       } else {
         this.color = "red lighten-1";
         this.snackbar = true;
       }
+      this.grep = false
       this.message = reply.msg;
+    },
+    async resetUser(userInfo) {
+      this.grep = true
+      const res = await fetch('/admit/renew', {
+        method: "POST",
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json'
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify({
+          username: userInfo.username
+        })
+      })
+      const receipt = await res.json()
+      if (receipt.sent) {
+        this.color = "teal accent-4"
+        this.snackbar = true
+      } else {
+        this.color = "red"
+        this.snackbar = true
+      }
+      this.grep = false
+      this.message = receipt.msg
     },
     logout() {
       this.$router.push("/login");
