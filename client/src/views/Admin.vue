@@ -33,19 +33,16 @@
                 hide-default-header
                 :headers="resTableHeaders"
                 :items="restaurantData"
-                :items-per-page="7"
-                class="elevation-10"
+                :items-per-page="setItems()"
+                class="table elevation-10"
                 disable-sort
               >
-                <template
-                  v-slot:header="{ props }"
-                  v-if="!this.$vuetify.breakpoint.xsOnly"
-                >
+                <template v-slot:header="{ props }" v-if="!breakpoint()">
                   <tr>
                     <td
                       v-for="(title, i) in props.headers"
                       :key="i"
-                      class="grey--text text--darken-2 title"
+                      class="title font-weight-regular heading"
                     >
                       {{ title.text }}
                     </td>
@@ -55,51 +52,56 @@
               {{ fetchRestaurants }}
             </v-col>
           </v-row>
-          <v-btn fab bottom right color="primary" class="mr-5 mb-5" fixed
+          <v-btn
+            fab
+            bottom
+            right
+            color="pink white--text"
+            class="mr-5 mb-5"
+            fixed
             ><v-icon>mdi-plus</v-icon></v-btn
           >
         </v-container>
       </v-tab-item>
-      <v-lazy>
-        <v-tab-item id="users">
-          <v-container class="container">
-            <v-progress-linear
-              color="primary"
-              indeterminate
-              :active="!userData.length"
-            ></v-progress-linear>
-            <v-row justify="center">
-              <v-col cols="12" xs="10">
-                <v-card
-                  tile
-                  v-for="(user, i) in userData"
+      <v-tab-item id="users">
+        <v-container class="container">
+          <v-progress-linear
+            color="primary"
+            indeterminate
+            :active="!userData.length"
+          ></v-progress-linear>
+          <v-data-table
+            :headers="userTableHeaders"
+            :items="userData"
+            :items-per-page="setItems()"
+            class="elevation-10 headline"
+            hide-default-header
+          >
+            <template v-slot:header="{ props }" v-if="!breakpoint()">
+              <tr>
+                <td
+                  v-for="(title, i) in props.headers"
                   :key="i"
-                  @click="randomConsoleFunction(user)"
+                  class="title font-weight-regular heading"
                 >
-                  <v-card-text>
-                    <div class="wrapper">
-                      <div>
-                        {{ user.username }}
-                      </div>
-                      <div>
-                        {{ user.registration }}
-                      </div>
-                      <div>
-                        {{ user.status }}
-                      </div>
-                      <div>
-                        <v-btn raised color="red lighten-1 white--text">Delete</v-btn>
-                      </div>
-                    </div>
-                  </v-card-text>
-                  <v-divider></v-divider>
-                </v-card>
-              </v-col>
-            </v-row>
-          </v-container>
-        </v-tab-item>
-      </v-lazy>
+                  {{ title.text }}
+                </td>
+              </tr>
+            </template>
+            <template v-slot:item.action="{ item }">
+              <v-btn color="red lighten-1" icon @click="deleteUser(item)"
+                ><v-icon>mdi-trash-can-outline</v-icon></v-btn
+              >
+              <v-btn color="primary" icon
+                ><v-icon>mdi-lock-reset</v-icon></v-btn
+              >
+            </template>
+          </v-data-table>
+        </v-container>
+      </v-tab-item>
     </v-tabs-items>
+    <v-snackbar v-model="snackbar" :color="color" :timeout="timeout" style="text-align: center;">{{
+      message}}</v-snackbar>
   </v-app>
 </template>
 
@@ -140,11 +142,31 @@ export default {
     ],
     userTableHeaders: [
       {
-        text: "Username"
+        text: "Username",
+        value: "username"
+      },
+      {
+        text: "Date",
+        value: "date"
+      },
+      {
+        text: "Time",
+        value: "time"
+      },
+      {
+        text: "Status",
+        value: "status"
+      },
+      {
+        value: "action"
       }
     ],
     restaurantData: [],
-    userData: []
+    userData: [],
+    snackbar: true,
+    timeout: 7000,
+    message: "This is Tony Stark from Titan",
+    color: "",
   }),
   computed: {
     fetchRestaurants() {
@@ -152,6 +174,12 @@ export default {
     }
   },
   methods: {
+    setItems() {
+      return this.$vuetify.breakpoint.xsOnly ? 5 : 7;
+    },
+    breakpoint() {
+      return this.$vuetify.breakpoint.xsOnly;
+    },
     caller(name) {
       if (name === "") {
         return;
@@ -162,17 +190,45 @@ export default {
       const records = await fetch("/master/records", {
         method: "POST",
         headers: {
-          'Accept': "Application/JSON",          
+          Accept: "application/json",
+          "Content-Type": "application/json"
         },
         credentials: "same-origin"
       });
-      const getUsers = await records.json()
+      const getUsers = await records.json();
       if (getUsers.valid) {
-        this.userData = getUsers.users
+        this.userData = getUsers.users;
+      } else {
+        this.color = 'red lighten-1'
+        this.snackbar = true
+        this.message = getUsers.msg
       }
     },
-    randomConsoleFunction(data) {
-      console.log(data);
+    async deleteUser(userinfo) {
+      const res = await fetch('/master/remove', {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          user: userinfo.username
+        }),
+        credentials: "same-origin"
+      });
+      const reply = await res.json()
+
+      if (reply.valid && reply.dtd) {
+        this.color = "teal accent-4";
+        this.snackbar = true;
+        console.time("Deletion")
+        this.userData = this.userData.filter(user => user.username !== userinfo.username)
+        console.timeEnd("Deletion")
+      } else {
+        this.color = "red lighten-1";
+        this.snackbar = true;
+      }
+      this.message = reply.msg;
     },
     logout() {
       this.$router.push("/login");
@@ -196,7 +252,11 @@ export default {
   color: #000;
 }
 .wrapper > div {
-  flex: 1
+  flex: 1;
+}
+
+.heading {
+  border-bottom: solid 1px #dbdbdb;
 }
 @media screen and (max-width: 600px) {
   .wrapper {
