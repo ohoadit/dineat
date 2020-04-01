@@ -48,6 +48,11 @@
                     </td>
                   </tr>
                 </template>
+                <template v-slot:item.action="{ item }">
+                  <v-btn icon @click="editRestaurant(item)"
+                    ><v-icon>mdi-pencil</v-icon></v-btn
+                  >
+                </template>
               </v-data-table>
               {{ fetchRestaurants }}
             </v-col>
@@ -59,6 +64,7 @@
             color="pink white--text"
             class="mr-5 mb-5"
             fixed
+            @click="addDialog = true"
             ><v-icon>mdi-plus</v-icon></v-btn
           >
         </v-container>
@@ -100,8 +106,76 @@
         </v-container>
       </v-tab-item>
     </v-tabs-items>
+    <v-dialog
+      v-model="addDialog"
+      fullscreen
+      transition="dialog-bottom-transition"
+    >
+      <v-card tile>
+        <v-app-bar color="primary" fixed>
+          <v-btn icon color="white" @click="addDialog = false"
+            ><v-icon>mdi-close</v-icon></v-btn
+          >
+          <v-toolbar-title class="white--text">
+            Add a new Restaurant
+          </v-toolbar-title>
+          <v-spacer></v-spacer>
+        </v-app-bar>
+        <v-container class="mt-10 pt-10">
+          <v-row justify="center">
+            <v-col cols="12" xs="12" sm="10">
+              <v-file-input
+                v-model="image"
+                label="Image"
+                show-size
+                :error-messages="imageError"
+                @change="showPreview"
+                accept="image/*"
+              ></v-file-input>
+              <v-row justify="center">
+                <v-col cols="11" xs="10">
+                  <v-img :src="imageURL" v-show="image" max-width="400px" max-height="400px"/>
+                </v-col>
+              </v-row>
+              <v-form ref="form" @submit.prevent="handleUpload">
+                <v-text-field
+                  v-model="name"
+                  label="Restaurant name"
+                  :value="name"
+                  :rules="[rules.isEmpty]"
+                ></v-text-field>
+                <v-text-field
+                  v-model="cuisines"
+                  label="Cuisines Served"
+                  :value="cuisines"
+                  :rules="[rules.isEmpty]"
+                ></v-text-field>
+                <v-text-field
+                  v-model="location"
+                  label="Location"
+                  :value="location"
+                  :rules="[rules.isEmpty]"
+                ></v-text-field>
+
+                <v-row justify="center">
+                  <v-btn
+                    raised
+                    @click="handleUpload"
+                    color="primary"
+                    class="mt-10"
+                    width="100"
+                    >Save</v-btn
+                  >
+                </v-row>
+              </v-form>
+            </v-col>
+          </v-row>
+        </v-container>
+      </v-card>
+    </v-dialog>
     <v-snackbar v-model="snackbar" :color="color" :timeout="timeout">{{
-      message}}</v-snackbar>
+      message
+    }}</v-snackbar>
   </v-app>
 </template>
 
@@ -138,6 +212,9 @@ export default {
       {
         text: "Location",
         value: "location"
+      },
+      {
+        value: "action"
       }
     ],
     userTableHeaders: [
@@ -163,11 +240,21 @@ export default {
     ],
     restaurantData: [],
     userData: [],
+    addDialog: false,
+    name: "",
+    cuisines: "",
+    image: null,
+    imageURL: "",
+    location: "",
+    imageError: "",
+    rules: {
+      isEmpty: v => !!v || "Should not be empty"
+    },
     grep: false,
     snackbar: false,
     timeout: 7000,
     message: "",
-    color: "",
+    color: ""
   }),
   computed: {
     fetchRestaurants() {
@@ -187,6 +274,56 @@ export default {
       }
       this[name]();
     },
+    editRestaurant(restInfo) {
+      console.log(restInfo);
+    },
+    showPreview() {
+      this.imageError = ""
+      if (!this.image) {
+        this.imageURL = "";
+      }
+
+      if (
+        ["image/jpg", "image/jpeg", "image/png"].filter(
+          imageType => this.image.type === imageType
+        ).length
+      ) {
+        this.imageURL = URL.createObjectURL(this.image);
+      } else {
+        this.imageError = "Invalid image";
+      }
+    },
+    async handleUpload() {
+      this.imageError = "";
+      if (!this.$refs.form.validate()) {
+        if(!this.image) {
+          this.imageError = "Invalid Image"
+        }
+        return;
+      }
+      if (
+        !this.image ||
+        !["image/jpg", "image/jpeg", "image/png"].filter(
+          imageType => this.image.type === imageType
+        ).length
+      ) {
+        return (this.imageError = "Invalid image");
+      }
+      const formdata = new FormData()
+       formdata.append('name', this.name)
+      
+      console.log(formdata)
+      const upload = await fetch('/master/collect', {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json'
+        },
+        credentials: 'same-origin',
+        body: formdata
+      })
+      console.log(this.imageURL);
+      console.log(this.image);
+    },
     async fetchUsers() {
       const records = await fetch("/master/records", {
         method: "POST",
@@ -200,14 +337,14 @@ export default {
       if (getUsers.valid) {
         this.userData = getUsers.users;
       } else {
-        this.color = 'red lighten-1'
-        this.snackbar = true
-        this.message = getUsers.msg
+        this.color = "red lighten-1";
+        this.snackbar = true;
+        this.message = getUsers.msg;
       }
     },
     async deleteUser(userinfo) {
-      this.grep = true
-      const res = await fetch('/master/remove', {
+      this.grep = true;
+      const res = await fetch("/master/remove", {
         method: "POST",
         headers: {
           Accept: "application/json",
@@ -218,42 +355,44 @@ export default {
         }),
         credentials: "same-origin"
       });
-      const reply = await res.json()
+      const reply = await res.json();
 
       if (reply.valid && reply.dtd) {
         this.color = "teal accent-4";
         this.snackbar = true;
-        this.userData = this.userData.filter(user => user.username !== userinfo.username)
+        this.userData = this.userData.filter(
+          user => user.username !== userinfo.username
+        );
       } else {
         this.color = "red lighten-1";
         this.snackbar = true;
       }
-      this.grep = false
+      this.grep = false;
       this.message = reply.msg;
     },
     async resetUser(userInfo) {
-      this.grep = true
-      const res = await fetch('/admit/renew', {
+      this.grep = true;
+      const res = await fetch("/admit/renew", {
         method: "POST",
         headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json'
+          Accept: "application/json",
+          "Content-Type": "application/json"
         },
-        credentials: 'same-origin',
+        credentials: "same-origin",
         body: JSON.stringify({
           username: userInfo.username
         })
-      })
-      const receipt = await res.json()
+      });
+      const receipt = await res.json();
       if (receipt.sent) {
-        this.color = "teal accent-4"
-        this.snackbar = true
+        this.color = "teal accent-4";
+        this.snackbar = true;
       } else {
-        this.color = "red"
-        this.snackbar = true
+        this.color = "red";
+        this.snackbar = true;
       }
-      this.grep = false
-      this.message = receipt.msg
+      this.grep = false;
+      this.message = receipt.msg;
     },
     logout() {
       this.$router.push("/login");
@@ -283,6 +422,7 @@ export default {
 .heading {
   border-bottom: solid 1px #dbdbdb;
 }
+
 @media screen and (max-width: 600px) {
   .wrapper {
     flex-direction: column;
