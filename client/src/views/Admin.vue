@@ -282,7 +282,6 @@ export default {
       if (!this.image) {
         this.imageURL = "";
       }
-
       if (
         ["image/jpg", "image/jpeg", "image/png"].filter(
           imageType => this.image.type === imageType
@@ -309,10 +308,12 @@ export default {
       ) {
         return (this.imageError = "Invalid image");
       }
-      const formdata = new FormData()
-       formdata.append('name', this.name)
+      let formdata = new FormData()
+      formdata.append("name", this.name)
+      formdata.append("cuisines", this.cuisines)
+      formdata.append("location", this.location)
+      formdata.append("image", this.image)
       
-      console.log(formdata)
       const upload = await fetch('/master/collect', {
         method: 'POST',
         headers: {
@@ -321,8 +322,14 @@ export default {
         credentials: 'same-origin',
         body: formdata
       })
-      console.log(this.imageURL);
-      console.log(this.image);
+      const receipt = await upload.json()
+      if (!receipt.valid) {
+        this.imageError = receipt.msg
+      } else {
+        this.color = "teal accent-4";
+        this.snackbar = true;
+        this.message = "Image Accepted IMO :P"
+      }
     },
     async fetchUsers() {
       const records = await fetch("/master/records", {
