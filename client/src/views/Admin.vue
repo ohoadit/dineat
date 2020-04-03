@@ -111,7 +111,7 @@
       fullscreen
       transition="dialog-bottom-transition"
     >
-      <v-card tile>
+      <v-card tile color="#f6f7f9">
         <v-app-bar color="primary" fixed>
           <v-btn icon color="white" @click="addDialog = false"
             ><v-icon>mdi-close</v-icon></v-btn
@@ -121,55 +121,103 @@
           </v-toolbar-title>
           <v-spacer></v-spacer>
         </v-app-bar>
-        <v-container class="mt-10 pt-10">
-          <v-row justify="center">
-            <v-col cols="12" xs="12" sm="10">
-              <v-file-input
-                v-model="image"
-                label="Image"
-                show-size
-                :error-messages="imageError"
-                @change="showPreview"
-                accept="image/*"
-              ></v-file-input>
-              <v-row justify="center">
-                <v-col cols="11" xs="10">
-                  <v-img :src="imageURL" v-show="image" max-width="400px" max-height="400px"/>
-                </v-col>
-              </v-row>
-              <v-form ref="form" @submit.prevent="handleUpload">
-                <v-text-field
-                  v-model="name"
-                  label="Restaurant name"
-                  :value="name"
-                  :rules="[rules.isEmpty]"
-                ></v-text-field>
-                <v-text-field
-                  v-model="cuisines"
-                  label="Cuisines Served"
-                  :value="cuisines"
-                  :rules="[rules.isEmpty]"
-                ></v-text-field>
-                <v-text-field
-                  v-model="location"
-                  label="Location"
-                  :value="location"
-                  :rules="[rules.isEmpty]"
-                ></v-text-field>
-
+        <v-container
+          class="mt-5"
+          :class="!this.$vuetify.breakpoint.xsOnly ? 'pa-10' : ''"
+        >
+          <v-card class="mt-10 pa-10" tile elevation="5">
+            <v-row justify="center">
+              <v-col cols="12" xs="12" sm="10">
+                <v-file-input
+                  v-model="image"
+                  label="Image"
+                  show-size
+                  :error-messages="imageError"
+                  @change="showPreview"
+                  accept="image/*"
+                ></v-file-input>
                 <v-row justify="center">
-                  <v-btn
-                    raised
-                    @click="handleUpload"
-                    color="primary"
-                    class="mt-10"
-                    width="100"
-                    >Save</v-btn
-                  >
+                  <v-col cols="11" xs="10">
+                    <v-img
+                      :src="imageURL"
+                      v-show="image"
+                      max-width="400px"
+                      max-height="400px"
+                    />
+                  </v-col>
                 </v-row>
-              </v-form>
-            </v-col>
-          </v-row>
+                <v-form ref="form" @submit.prevent="handleUpload">
+                  <v-text-field
+                    v-model="name"
+                    label="Restaurant name"
+                    :value="name"
+                    :rules="[rules.isEmpty]"
+                  ></v-text-field>
+                  <v-text-field
+                    v-model="location"
+                    label="Location"
+                    :value="location"
+                    :rules="[rules.isEmpty]"
+                  ></v-text-field>
+                  <v-select
+                    v-model="forte"
+                    :items="specialities"
+                    label="Speciality"
+                    :rules="[rules.isEmpty]"
+                  ></v-select>
+                  <v-slider
+                    v-model="tables"
+                    dense
+                    min="7"
+                    max="25"
+                    class="mt-5"
+                    label="Number of Tables"
+                    :thumb-size="22"
+                    thumb-label="always"
+                  ></v-slider>
+                  <v-select
+                    v-model="foodServed"
+                    label="Cuisines Served"
+                    :items="cuisines"
+                    :rules="[rules.isEmpty]"
+                    chips
+                    multiple
+                    clearable
+                  ></v-select>
+                  <v-card class="pa-10 mt-5" elevation="5">
+                    <p class="headline" align="center">Open hours</p>
+                    <v-range-slider
+                      class="my-5"
+                      v-model="morning"
+                      ticks="always"
+                      min="0"
+                      max="24"
+                      :thumb-size="22"
+                      thumb-label="always"
+                    ></v-range-slider>
+                    <v-range-slider
+                      class="my-5"
+                      v-model="evening"
+                      ticks="always"
+                      min="0"
+                      max="24"
+                      :thumb-size="22"
+                      thumb-label="always"
+                    ></v-range-slider>
+                  </v-card>
+                  <v-row justify="center">
+                    <v-btn
+                      @click="handleUpload"
+                      color="primary white--text"
+                      class="mt-10"
+                      width="100"
+                      >Save</v-btn
+                    >
+                  </v-row>
+                </v-form>
+              </v-col>
+            </v-row>
+          </v-card>
         </v-container>
       </v-card>
     </v-dialog>
@@ -238,15 +286,59 @@ export default {
         value: "action"
       }
     ],
+    specialities: [],
+    cuisines: [
+      "Gujarati",
+      "South Indian",
+      "Punjabi",
+      "North Indian",
+      "Thai Food",
+      "Fast Food",
+      "Cafe",
+      "Bengali",
+      "Nashta",
+      "Continental",
+      "Italian",
+      "Chinese",
+      "Barbecue",
+      "Drinks",
+      "Desserts",
+      "Fine Dining",
+      "Kathiawaadi",
+      "Desi",
+      "Tea",
+      "Coffee",
+      "Pizza",
+      "Burger",
+      "Paneer",
+      "Sizzlers",
+      "Waffle",
+      "Cake",
+      "Pastry",
+      "Thali",
+      "Tacos",
+      "Handva",
+      "Dhokla",
+      "Idli",
+      "Vada",
+      "Fafda",
+      "Jalebi",
+      "Khaman"
+    ],
     restaurantData: [],
     userData: [],
     addDialog: false,
     name: "",
-    cuisines: "",
     image: null,
     imageURL: "",
     location: "",
+    forte: "",
+    foodServed: "",
+    tables: 7,
+    morning: [0, 24],
+    evening: [0, 24],
     imageError: "",
+    selError: "",
     rules: {
       isEmpty: v => !!v || "Should not be empty"
     },
@@ -258,6 +350,7 @@ export default {
   }),
   computed: {
     fetchRestaurants() {
+      this.specialities = this.cuisines.slice(0, 18);
       this.restaurantData = this.$store.getters.fetchRestaurants;
     }
   },
@@ -278,25 +371,23 @@ export default {
       console.log(restInfo);
     },
     showPreview() {
-      this.imageError = ""
+      this.imageError = "";
       if (!this.image) {
-        this.imageURL = "";
+        return (this.imageURL = "");
       }
-      if (
-        ["image/jpg", "image/jpeg", "image/png"].filter(
-          imageType => this.image.type === imageType
-        ).length
-      ) {
-        this.imageURL = URL.createObjectURL(this.image);
-      } else {
-        this.imageError = "Invalid image";
-      }
+      ["image/jpg", "image/jpeg", "image/png"].filter(
+        imageType => this.image.type === imageType
+      ).length
+        ? (this.imageURL = URL.createObjectURL(this.image))
+        : (this.imageError = "Invalid image");
     },
     async handleUpload() {
       this.imageError = "";
       if (!this.$refs.form.validate()) {
-        if(!this.image) {
-          this.imageError = "Invalid Image"
+        console.log(this.morning);
+        console.log(this.evening);
+        if (!this.image) {
+          this.imageError = "Invalid Image";
         }
         return;
       }
@@ -308,27 +399,36 @@ export default {
       ) {
         return (this.imageError = "Invalid image");
       }
-      let formdata = new FormData()
-      formdata.append("name", this.name)
-      formdata.append("cuisines", this.cuisines)
-      formdata.append("location", this.location)
-      formdata.append("image", this.image)
-      
-      const upload = await fetch('/master/collect', {
-        method: 'POST',
+      let openHours = JSON.stringify(this.morning) === "[0,12]" && JSON.stringify(this.evening) === "[12,24]" ? "24 hrs" : this.morning.join('-') + " "+ this.evening.join('-')
+      let formdata = new FormData();
+      formdata.append("name", this.name);
+      formdata.append("speciality", this.forte);
+      formdata.append("location", this.location);
+      formdata.append("image", this.image);
+      formdata.append("cuisines", this.foodServed);
+      formdata.append("tables", this.tables);
+      formdata.append("openhrs", openHours);
+      console.log([...formdata])
+      const upload = await fetch("/master/collect", {
+        method: "POST",
         headers: {
-          Accept: 'application/json'
+          Accept: "application/json"
         },
-        credentials: 'same-origin',
+        credentials: "same-origin",
         body: formdata
-      })
-      const receipt = await upload.json()
-      if (!receipt.valid) {
-        this.imageError = receipt.msg
-      } else {
+      });
+      const receipt = await upload.json();
+      if (receipt.valid) {
         this.color = "teal accent-4";
         this.snackbar = true;
-        this.message = "Image Accepted IMO :P"
+        this.message = receipt.msg;
+      } else if (upload.status === 500) {
+        this.color = "red lighten-1";
+        this.snackbar = true;
+        this.message = receipt.msg;
+      }
+      else {
+        this.imageError = receipt.msg;
       }
     },
     async fetchUsers() {
