@@ -1,14 +1,15 @@
 <template>
   <v-app>
-    <v-app-bar fixed elevation="3" color="secondary white--text">
+    <v-app-bar fixed elevation="3">
       <v-app-bar-nav-icon
         @click.stop="drawer = !drawer"
-        color="white"
       ></v-app-bar-nav-icon>
       <v-toolbar-title class="headline">Dineat</v-toolbar-title>
       <v-spacer></v-spacer>
       <v-toolbar-items>
-        <v-btn text @click="logout" color="white">Logout</v-btn>
+        <v-btn text @click="logout" color="primary">
+          <v-icon left>mdi-logout</v-icon>Logout
+        </v-btn>
       </v-toolbar-items>
     </v-app-bar>
     <v-navigation-drawer v-model="drawer" absolute temporary>
@@ -45,15 +46,17 @@
         <v-col cols="12" xs="12" sm="10" md="9">
           <v-form ref="form" @submit.prevent="textSearch">
             <v-text-field
-              label="search"
+              label="search..."
               v-model="speech"
               :value="speech"
               hide-details
+              autofocus
               solo
               clearable
               prepend-inner-icon="mdi-magnify"
               append-icon="mdi-microphone"
               @click:append="voiceSearch"
+              @click:clear="getData"
             ></v-text-field>
           </v-form>
         </v-col>
@@ -154,14 +157,19 @@
         transition="dialog-bottom-transition"
       >
         <v-card tile>
-          <v-toolbar>
-            <v-btn icon @click="bookingDialog = false" color="primary"
+          <v-toolbar class="primary white--text">
+            <v-btn icon @click="bookingDialog = false" color="white"
               ><v-icon>mdi-close</v-icon></v-btn
             >
             <v-toolbar-title>{{ currentBooking.name }}</v-toolbar-title>
             <v-spacer></v-spacer>
-            <v-btn text color="primary">Save</v-btn>
+            <v-toolbar-items>
+              <v-btn text color="white">Save</v-btn>
+            </v-toolbar-items>
           </v-toolbar>
+          <v-row justify="center" class="mt-10">
+            <p class="display-1 font-weight-regular">Booking Details</p>
+          </v-row>
           <v-row justify="center">
             <v-col cols="12" xs="10" sm="6" md="5">
               <v-card  elevation="5">
@@ -176,6 +184,7 @@
       </v-dialog>
     </v-container>
     {{ loadRestaurants }}
+    {{ initSpeechApi }}
   </v-app>
 </template>
 
@@ -200,8 +209,9 @@ export default {
       required: value => !!value || "Required"
     }
   }),
-  mounted() {
-    const recognition =
+  computed: {
+    initSpeechApi () {
+      const recognition =
       window.webkitSpeechRecognition || window.SpeechRecognition;
     if (!recognition) {
       this.voiceModule = true;
@@ -217,13 +227,13 @@ export default {
     let voices = [];
     const synthesis = window.speechSynthesis;
     voices = synthesis.getVoices();
-    synthesis.onvoiceschanged = async () => {
-      voices = await synthesis.getVoices();
+    synthesis.onvoiceschanged = () => {
+      voices = synthesis.getVoices();
+      console.log(voices)
     };
-    this.synthesis = synthesis;
-    this.voice = voices[4];
-  },
-  computed: {
+      this.synthesis = synthesis;
+      this.voice = voices[10];
+    },
     loadRestaurants() {
       this.data = this.$store.getters.fetchRestaurants;
     }
@@ -288,9 +298,13 @@ export default {
         }
         const result = await this.startCapturing(this.recognize);
         this.speech = result;
-        this.search(this.speech.toLowerCase(), this.bookWords)
-          ? this.dictate("Here are some results")
-          : this.dictate("Sorry. No match found.");
+        let results = this.$store.getters.searchRestaurant(this.speech.toLowerCase());
+        if (results.length) {
+          this.dictate("Here is what I found")
+          this.data = [...results]
+        } else {
+          this.dictate("Sorry, no match found.");
+        }
       } catch (err) {
         this.dictate(err);
       }
@@ -300,9 +314,7 @@ export default {
       if (this.speech === "") {
         return;
       }
-      this.data = this.$store.getters.searchRestaurant(
-        this.speech.toLowerCase()
-      );
+      this.data = this.$store.getters.searchRestaurant(this.speech.toLowerCase());
     },
     getData() {
       this.data = this.$store.getters.fetchRestaurants;
@@ -310,7 +322,6 @@ export default {
     bindClick(hotel) {
       this.bookingDialog = true;
       this.currentBooking = hotel;
-      console.log(`${hotel.name} card clicked`);
     },
     logout() {
       this.$router.push("/login");
@@ -322,4 +333,8 @@ export default {
 };
 </script>
 
-<style></style>
+<style scoped>
+#app {
+  background-color: #f5f5f5;
+}
+</style>
