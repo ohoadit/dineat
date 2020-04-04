@@ -3,6 +3,7 @@ import App from './App.vue'
 import router from './router.js'
 import store from './store'
 import vuetify from './plugins/vuetify';
+import 'typeface-roboto/index.css';
 
 Vue.config.productionTip = false
 
