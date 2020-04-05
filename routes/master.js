@@ -26,7 +26,7 @@ master.post("/remove", (req, res, next) => {
           ? res.json({ valid: true, msg: "Deletion Successful!", dtd: true })
           : res.json({ valid: true, msg: "Deletion Failed :/", dtd: false });
       } else {
-        return res.json({ valid: false, msg: "Deletion Failed :/" });
+        return res.status(401).json({ valid: false, msg: "Invalid Request :/" });
       }
     } catch (err) {
       console.log(err);
@@ -61,40 +61,39 @@ const upload = multer({
 }).single("image");
 
 master.post("/collect", (req, res, next) => {
+  jwt.verify(req.cookies['Dineat'], process.env.LOB, (err, payload) => {
+  
+    if (err || payload.username !== 'feedbackloop08') {
+      return res.status(401).json({msg: "User"})
+    }
+  
   upload(req, res, err => {
     if (err) {
       console.log(err);
       return res.json({ valid: false, msg: err.message });
     } else {
-      try {
         cloudinary.uploader.upload(req.file.path, async (err, success) => {
           if (err) {
-            throw new Error("Upload Error");
+            console.log(err);
+            return res.status(500).json({ msg: "Upload Error :/ Please check your Internet Connection" });
           } else {
-            const body = req.body;
             const metadata = success.url.split("/");
-            const imageData =
-              metadata[metadata.length - 2] +
-              "/" +
-              metadata[metadata.length - 1];
-            console.log(imageData);
+            const imageData = metadata[metadata.length - 2] + "/" + metadata[metadata.length - 1];
+            const data = []
+            for (const key in req.body) {
+              data.push(req.body[key])
+            }
+            data.push(req.body['tables'])
+            data.push(imageData)
+            console.log(data)
+            const restaurant = {...req.body}
+            restaurant.url = process.env.CDY_URL + imageData
+            console.log(restaurant)  
             try {
               const push = await pool.query(
-                "Insert into restaurant(name, speciality, cuisines, area, image, time, tables, available) values ($1, $2, $3, $4, $5, $6, $7, $8)",
-                [
-                  body.name,
-                  body.speciality,
-                  body.cuisines,
-                  body.location,
-                  imageData,
-                  body.openhrs,
-                  body.tables,
-                  body.tables
-                ]
-              );
+                "Insert into restaurant(name, speciality, area, cuisines, tables, time, available, image) values ($1, $2, $3, $4, $5, $6, $7, $8)", data);
               if (push.rowCount) {
-                console.log(push);
-                return res.json({ valid: true, msg: "Restaurant Saved" });
+                return res.json({ valid: true, msg: "Restaurant added to the base!", data: restaurant});
               }
             } catch (err) {
               console.log(err);
@@ -102,12 +101,9 @@ master.post("/collect", (req, res, next) => {
             }
           }
         });
-      } catch (err) {
-        console.log(err);
-        return res.status(500).json({ msg: "Upload Error :/" });
-      }
     }
   });
+  })
 });
 
 master.post("/records", (req, res, next) => {

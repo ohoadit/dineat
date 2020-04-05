@@ -34,7 +34,7 @@
                 :headers="resTableHeaders"
                 :items="restaurantData"
                 :items-per-page="setItems()"
-                class="table elevation-10"
+                class="elevation-3"
                 disable-sort
               >
                 <template v-slot:header="{ props }" v-if="!breakpoint()">
@@ -80,7 +80,7 @@
             :headers="userTableHeaders"
             :items="userData"
             :items-per-page="setItems()"
-            class="elevation-10 headline"
+            class="elevation-3"
             hide-default-header
           >
             <template v-slot:header="{ props }" v-if="!breakpoint()">
@@ -120,6 +120,7 @@
             Add a new Restaurant
           </v-toolbar-title>
           <v-spacer></v-spacer>
+          <v-progress-linear color="white" striped indeterminate absolute bottom height="3" :active="push"></v-progress-linear>
         </v-app-bar>
         <v-container
           class="mt-5"
@@ -254,8 +255,8 @@ export default {
         value: "name"
       },
       {
-        text: "Cuisines",
-        value: "cuisines"
+        text: "Speciality",
+        value: "speciality"
       },
       {
         text: "Location",
@@ -300,11 +301,12 @@ export default {
       "Continental",
       "Italian",
       "Chinese",
-      "Barbecue",
+      "Barbeque",
       "Drinks",
       "Desserts",
       "Fine Dining",
-      "Kathiawaadi",
+      "Kathiyawadi",
+      "Rajasthani",
       "Desi",
       "Tea",
       "Coffee",
@@ -314,13 +316,16 @@ export default {
       "Sizzlers",
       "Waffle",
       "Cake",
+      "Sandwich",
       "Pastry",
       "Thali",
       "Tacos",
-      "Handva",
+      "Handvo",
       "Dhokla",
       "Idli",
       "Vada",
+      "Dosa",
+      "Upma",
       "Fafda",
       "Jalebi",
       "Khaman"
@@ -343,6 +348,7 @@ export default {
       isEmpty: v => !!v || "Should not be empty"
     },
     grep: false,
+    push: false,
     snackbar: false,
     timeout: 7000,
     message: "",
@@ -350,13 +356,13 @@ export default {
   }),
   computed: {
     fetchRestaurants() {
-      this.specialities = this.cuisines.slice(0, 18);
+      this.specialities = this.cuisines.slice(0, 19);
       this.restaurantData = this.$store.getters.fetchRestaurants;
     }
   },
   methods: {
     setItems() {
-      return this.$vuetify.breakpoint.xsOnly ? 5 : 7;
+      return this.$vuetify.breakpoint.xsOnly ? 5 : 10;
     },
     breakpoint() {
       return this.$vuetify.breakpoint.xsOnly;
@@ -384,8 +390,6 @@ export default {
     async handleUpload() {
       this.imageError = "";
       if (!this.$refs.form.validate()) {
-        console.log(this.morning);
-        console.log(this.evening);
         if (!this.image) {
           this.imageError = "Invalid Image";
         }
@@ -399,6 +403,7 @@ export default {
       ) {
         return (this.imageError = "Invalid image");
       }
+      this.push = true
       let openHours = JSON.stringify(this.morning) === "[0,12]" && JSON.stringify(this.evening) === "[12,24]" ? "24 hrs" : this.morning.join('-') + " "+ this.evening.join('-')
       let formdata = new FormData();
       formdata.append("name", this.name);
@@ -408,7 +413,7 @@ export default {
       formdata.append("cuisines", this.foodServed);
       formdata.append("tables", this.tables);
       formdata.append("openhrs", openHours);
-      console.log([...formdata])
+
       const upload = await fetch("/master/collect", {
         method: "POST",
         headers: {
@@ -417,18 +422,18 @@ export default {
         credentials: "same-origin",
         body: formdata
       });
+      this.push = false
       const receipt = await upload.json();
       if (receipt.valid) {
         this.color = "teal accent-4";
         this.snackbar = true;
         this.message = receipt.msg;
-      } else if (upload.status === 500) {
+        this.addDialog = false
+        this.$store.commit('addRestaurant', receipt.data)
+      } else {
         this.color = "red lighten-1";
         this.snackbar = true;
         this.message = receipt.msg;
-      }
-      else {
-        this.imageError = receipt.msg;
       }
     },
     async fetchUsers() {
