@@ -107,13 +107,10 @@ master.post("/collect", (req, res, next) => {
 master.post("/pull", (req, res, next) => {
     jwt.verify(req.cookies['Dineat'], process.env.LOB, async (err, payload) => {
       try {
-        if (!err && payload.username === 'feedbackloop08') {
+        if (!err) {
           const retrieve = await pool.query('Select * from restaurant')
           retrieve.rows.forEach(res => res.image = process.env.CDY_URL + res.image)
-          console.log(retrieve)
           return res.json({valid: true, places: [...retrieve.rows]})
-        } else {
-          return res.status(401).json({valid: false})
         }
       } catch (err) {
         console.log(err)
