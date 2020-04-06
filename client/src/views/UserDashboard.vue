@@ -15,9 +15,6 @@
     <v-navigation-drawer v-model="drawer" absolute temporary>
       <v-list>
         <v-list-item>
-          <v-list-item-avatar>
-            <v-avatar color="yellow" size="48"><span>A</span></v-avatar>
-          </v-list-item-avatar>
           <v-list-item-content class="headline">
             {{ this.$store.state.user.username }}
           </v-list-item-content>
@@ -69,14 +66,19 @@
           height="auto"
         >
           <v-card tile>
-            <v-card-title>
-              Capturing commands...
+            <v-card-title class="title font-weight-regular">
+              search for areas, places, cuisines ....
               <v-spacer></v-spacer>
               <v-progress-circular
                 :indeterminate="infinite"
                 color="primary lighten-1"
               ></v-progress-circular>
             </v-card-title>
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn color="red lighten-1 white--text" @click="stopCapturing">Stop</v-btn>
+              <v-spacer></v-spacer>
+            </v-card-actions>
           </v-card>
         </v-dialog>
       </v-row>
@@ -227,18 +229,19 @@ export default {
     let voices = [];
     const synthesis = window.speechSynthesis;
     voices = synthesis.getVoices();
-    synthesis.onvoiceschanged = () => {
-      voices = synthesis.getVoices();
-      console.log(voices)
-    };
+    synthesis.onvoiceschanged = () => voices = synthesis.getVoices();
       this.synthesis = synthesis;
-      this.voice = voices[10];
+      this.voice = voices[2];
     },
     loadRestaurants() {
       this.data = this.$store.getters.fetchRestaurants;
     }
   },
+  mounted () {
+    this.$store.dispatch('grabRestaurants')
+  },
   methods: {
+    
     dictate(toSpeak) {
       if (this.synthesis.speaking) {
         return;
@@ -252,18 +255,14 @@ export default {
 
     startCapturing(recognize) {
       const promise = new Promise((solved, denied) => {
-        recognize.onstart = () => {
-          this.voiceDialog = true;
-        };
+        recognize.onstart = () => this.voiceDialog = true;
 
         recognize.onspeechend = () => {
           recognize.stop();
           this.voiceDialog = false;
         };
 
-        recognize.onresult = event => {
-          solved(event.results[0][0].transcript);
-        };
+        recognize.onresult = event => solved(event.results[0][0].transcript);
 
         recognize.onerror = err => {
           this.voiceDialog = false;
@@ -280,6 +279,10 @@ export default {
         recognize.start();
       });
       return promise;
+    },
+    stopCapturing () {
+      this.recognize.stop()
+      this.voiceDialog = false
     },
 
     search(keyword, dictionary) {
@@ -322,6 +325,9 @@ export default {
     bindClick(hotel) {
       this.bookingDialog = true;
       this.currentBooking = hotel;
+    },
+    randomReturn () {
+
     },
     logout() {
       this.$router.push("/login");

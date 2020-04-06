@@ -58,18 +58,21 @@ const store = new Vuex.Store({
     },
 
     searchRestaurant: state => sentence => {
+      console.time("Start")
       store.commit("minifier");
       const lexicons = sentence.split(" ").filter(token => token.length >= 3);
       const arr = [];
       lexicons.forEach(lexicon => {
         state.resMin.forEach((restaurant, index) => {
           if (restaurant.includes(lexicon)) {
-            if (!arr.includes(index)) {
+            console.log(arr)
+            if (!arr.includes(restaurant)) {
               arr.push(state.restaurants[index]);
             }
           }
         });
       });
+      console.timeEnd("Start")
       return arr;
     }
   },
