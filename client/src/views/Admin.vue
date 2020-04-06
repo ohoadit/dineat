@@ -297,7 +297,7 @@ export default {
       "Fast Food",
       "Cafe",
       "Bengali",
-      "Nashta",
+      "Mexican",
       "Continental",
       "Italian",
       "Chinese",
@@ -356,9 +356,12 @@ export default {
   }),
   computed: {
     fetchRestaurants() {
-      this.specialities = this.cuisines.slice(0, 19);
+      this.specialities = this.cuisines.slice(0, 20);
       this.restaurantData = this.$store.getters.fetchRestaurants;
     }
+  },
+  mounted () {
+    this.$store.dispatch('grabRestaurants');
   },
   methods: {
     setItems() {
@@ -429,7 +432,7 @@ export default {
         this.snackbar = true;
         this.message = receipt.msg;
         this.addDialog = false
-        this.$store.commit('addRestaurant', receipt.data)
+        this.$store.state.restaurants.unshift(receipt.data)
       } else {
         this.color = "red lighten-1";
         this.snackbar = true;

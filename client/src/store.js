@@ -14,8 +14,13 @@ const store = new Vuex.Store({
     restaurants: []
   },
   mutations: {
+
     setUser (state, payload) {
       Object.assign(state.user, payload)
+    },
+
+    setRestaurants (state, eateries) {
+      state.restaurants = eateries
     },
 
     minifier (state) {
@@ -31,11 +36,6 @@ const store = new Vuex.Store({
       });
     },
 
-    addRestaurant: state => eatery => {
-      console.log(eatery)
-      state.restaurants.unshift(eatery)
-    },
-    
     sessionStarted (state) {
       const check = setInterval(() => {
         if (document.cookie !== state.user.cookie) {
@@ -73,7 +73,21 @@ const store = new Vuex.Store({
       return arr;
     }
   },
-  actions: {},
+  actions: {
+    async grabRestaurants (context, state) {
+      const req = await fetch('/master/pull', {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/JSON',
+        },
+        credentials: 'same-origin'
+      })
+      const payload = await req.json()
+      if (payload.valid) {
+        context.commit('setRestaurants', payload.places)
+      }
+    }
+  },
   modules: {}
 });
 

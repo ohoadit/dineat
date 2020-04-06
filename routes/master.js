@@ -83,15 +83,13 @@ master.post("/collect", (req, res, next) => {
             for (const key in req.body) {
               data.push(req.body[key])
             }
-            data.push(req.body['tables'])
+            data.push(req.body.tables)
             data.push(imageData)
-            console.log(data)
             const restaurant = {...req.body}
-            restaurant.url = process.env.CDY_URL + imageData
-            console.log(restaurant)  
+            restaurant.image = process.env.CDY_URL + imageData
             try {
               const push = await pool.query(
-                "Insert into restaurant(name, speciality, area, cuisines, tables, time, available, image) values ($1, $2, $3, $4, $5, $6, $7, $8)", data);
+                "Insert into restaurant(name, speciality, location, cuisines, tables, time, available, image) values ($1, $2, $3, $4, $5, $6, $7, $8)", data);
               if (push.rowCount) {
                 return res.json({ valid: true, msg: "Restaurant added to the base!", data: restaurant});
               }
@@ -105,6 +103,24 @@ master.post("/collect", (req, res, next) => {
   });
   })
 });
+
+master.post("/pull", (req, res, next) => {
+    jwt.verify(req.cookies['Dineat'], process.env.LOB, async (err, payload) => {
+      try {
+        if (!err && payload.username === 'feedbackloop08') {
+          const retrieve = await pool.query('Select * from restaurant')
+          retrieve.rows.forEach(res => res.image = process.env.CDY_URL + res.image)
+          console.log(retrieve)
+          return res.json({valid: true, places: [...retrieve.rows]})
+        } else {
+          return res.status(401).json({valid: false})
+        }
+      } catch (err) {
+        console.log(err)
+        return res.status(500).json({msg: "Database Server Error :/"})
+      }
+    })
+})
 
 master.post("/records", (req, res, next) => {
   jwt.verify(req.cookies["Dineat"], process.env.LOB, async (err, payload) => {
@@ -120,7 +136,7 @@ master.post("/records", (req, res, next) => {
       }
     } catch (err) {
       console.log(err);
-      return res.status(500).send({ msg: "Internal Server Error" });
+      return res.status(500).send({ msg: "Database Server Error :/" });
     }
   });
 });
