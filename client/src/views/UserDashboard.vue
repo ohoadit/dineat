@@ -145,6 +145,9 @@
               </v-card-title>
               <v-card-text class="subtitle">
                 <div>
+                  {{ restaurant.speciality }}
+                </div>
+                <div>
                   <v-icon>mdi-map-marker</v-icon>
                   {{ restaurant.location }}
                 </div>
@@ -205,7 +208,8 @@ export default {
     bookingDialog: false,
     currentBooking: {},
     data: [],
-    bookWords: ["book", "book a table", "find a table", "table", "find"],
+    successCommands: ["Here are some results!", "This is what I got!", "Search results are as follows"],
+    failureCommands: ["No match found!", "No such places or cuisines!", "Sorry no matching result!"],
     infinite: true,
     rules: {
       required: value => !!value || "Required"
@@ -292,7 +296,6 @@ export default {
       const res = dictionary.filter(word => keyword === word);
       return res.length ? true : false;
     },
-
     async voiceSearch() {
       try {
         if (this.voiceModule) {
@@ -301,12 +304,18 @@ export default {
         }
         const result = await this.startCapturing(this.recognize);
         this.speech = result;
+        if (this.speech.includes('open' || 'book')) {
+          if (this.speech.includes('open the first' || 'book the first')) {
+            
+          }
+          return
+        }
         let results = this.$store.getters.searchRestaurant(this.speech.toLowerCase());
         if (results.length) {
-          this.dictate("Here is what I found")
+          this.dictate(this.successCommands[Math.floor(Math.random() * 3)])
           this.data = [...results]
         } else {
-          this.dictate("Sorry, no match found.");
+          this.dictate(this.failureCommands[Math.floor(Math.random() * 3)]);
         }
       } catch (err) {
         this.dictate(err);
@@ -326,11 +335,9 @@ export default {
       this.bookingDialog = true;
       this.currentBooking = hotel;
     },
-    randomReturn () {
-
-    },
+    
     logout() {
-      this.$router.push("/login");
+      this.$router.go("/login");
       document.cookie =
         "Dineat=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
       this.$store.commit("sessionEnded");

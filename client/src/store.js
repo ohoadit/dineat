@@ -40,7 +40,7 @@ const store = new Vuex.Store({
       const check = setInterval(() => {
         if (document.cookie !== state.user.cookie) {
           if (router.currentRoute.name !== "Login") {
-              router.push("/login").catch(err => console.log(err))
+              router.push("/login").catch(err => {})
           }
           clearInterval(check);
         }
@@ -58,21 +58,19 @@ const store = new Vuex.Store({
     },
 
     searchRestaurant: state => sentence => {
-      console.time("Start")
       store.commit("minifier");
-      const lexicons = sentence.split(" ").filter(token => token.length >= 3);
       const arr = [];
+
+      const lexicons = sentence.split(" ").filter(token => token.length >= 3);
       lexicons.forEach(lexicon => {
         state.resMin.forEach((restaurant, index) => {
           if (restaurant.includes(lexicon)) {
-            console.log(arr)
             if (!arr.includes(restaurant)) {
               arr.push(state.restaurants[index]);
             }
           }
         });
       });
-      console.timeEnd("Start")
       return arr;
     }
   },
