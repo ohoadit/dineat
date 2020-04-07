@@ -46,7 +46,6 @@ const signature = async (req, res) => {
       const current = Math.floor(Date.now() / 1000);
       const stamp = Number(handshake.rows[0].stamp);
       if (current > stamp + 3600) {
-        await pool.query("Delete from authorized where token = $1", [key]);
         res.json({ valid: false, msg: "Link expired register again!" });
         return {
           approved: false
@@ -95,9 +94,9 @@ admitRouter.post("/enroll", async (req, res, next) => {
 admitRouter.post("/register", async (req, res) => {
   try {
     const email = req.body.email;
-    const rex = /^[a-zA-Z0-9](\.?[a-zA-Z0-9]){5,}@(gmail\.com|iite\.indusuni\.ac\.in)$/
+    const rex = /^[a-zA-Z0-9](\.?[a-zA-Z0-9]){5,}@(gmail\.com|(iite\.)?indusuni\.ac\.in)$/
     if (!rex.test(email)) {
-      return res.json({sent: false, field: 'emailError', msg: "Invalid email. Use gmail/college id"})
+      return res.json({sent: false, field: 'emailError', msg: "Invalid email. Please use gmail/college id"})
     }
     const user = email.split("@")[0];
     const check = await pool.query(
@@ -120,17 +119,15 @@ admitRouter.post("/register", async (req, res) => {
     return res.status(500).json({msg: "Internal Server Error", sent: false});
   }
 });
-
+  
 admitRouter.post('/renew', (req, res, next) => {
   jwt.verify(req.cookies['Dineat'], process.env.LOB, async (err, payload) => {
     try {
       if (!err && payload.username === "feedbackloop08") {
-        const username = req.body.username
-        const email = /^[a-zA-z]{5,}\.(1|2)[0-9]{1}\.(it|ce|cse)$/.test(req.body.username) ? `${username}@iite.indusuni.ac.in` : `${username}@gmail.com`
+        const email = req.body.username + '@'+ req.body.domain
         const setter = resetKey();
         const time = Math.floor(Date.now() / 1000);
         const update = await pool.query('Update authorized set token = $1, stamp = $2 where username = $3', [setter, time, username])
-        console.log(update)
         return await mailer(res, email, setter, req.headers.host);
       } else {
         return res.status(401).json({sent: false, msg: "You ain't Ad!"})

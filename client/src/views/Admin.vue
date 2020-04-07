@@ -98,11 +98,25 @@
               <v-btn color="red lighten-1" icon @click="deleteUser(item)"
                 ><v-icon>mdi-trash-can-outline</v-icon></v-btn
               >
-              <v-btn color="primary" icon @click="resetUser(item)"
+              <v-btn color="primary" icon @click="setDomain(item)"
                 ><v-icon>mdi-lock-reset</v-icon></v-btn
               >
             </template>
           </v-data-table>
+          <v-dialog max-width="500px" v-model="domainDialog">
+            <v-card tile>
+              <v-toolbar elevation="1">
+                <v-toolbar-title>Resetter Link</v-toolbar-title>
+            </v-toolbar>
+            <div class="px-10 my-10">
+              <v-select v-model="domain" :items="domainNames" label="Domain" :rules="[rules.isEmpty]"></v-select>
+            </div>
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn text color="primary" class="send" @click="resetUser">Send</v-btn>
+            </v-card-actions>
+            </v-card>
+          </v-dialog>
         </v-container>
       </v-tab-item>
     </v-tabs-items>
@@ -342,6 +356,10 @@ export default {
     tables: 7,
     morning: [0, 24],
     evening: [0, 24],
+    username: '',
+    domainNames: ["gmail.com", "iite.indusuni.ac.in", "indusuni.ac.in"],
+    domainDialog: false,
+    domain: '',
     imageError: "",
     selError: "",
     rules: {
@@ -485,8 +503,17 @@ export default {
       this.grep = false;
       this.message = reply.msg;
     },
-    async resetUser(userInfo) {
+    setDomain (userInfo) {
+      this.domainDialog = true
+      this.username = userInfo.username
+      console.log(this.username)
+    },
+    async resetUser() {
+      if(!this.domain) {
+        return;
+      }
       this.grep = true;
+      this.domainDialog = false;
       const res = await fetch("/admit/renew", {
         method: "POST",
         headers: {
@@ -495,7 +522,8 @@ export default {
         },
         credentials: "same-origin",
         body: JSON.stringify({
-          username: userInfo.username
+          username: this.username,
+          domain: this.domain
         })
       });
       const receipt = await res.json();
@@ -523,27 +551,9 @@ export default {
 .container {
   margin-top: 120px;
 }
-.wrapper {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  font-size: 20px;
-  color: #000;
-}
-.wrapper > div {
-  flex: 1;
-}
 
 .heading {
   border-bottom: solid 1px #dbdbdb;
 }
 
-@media screen and (max-width: 600px) {
-  .wrapper {
-    flex-direction: column;
-  }
-  .wrapper div {
-    margin-top: 10px;
-  }
-}
 </style>
