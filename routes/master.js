@@ -109,7 +109,10 @@ master.post("/pull", (req, res, next) => {
       try {
         if (!err) {
           const retrieve = await pool.query('Select * from restaurant')
-          retrieve.rows.forEach(res => res.image = process.env.CDY_URL + res.image)
+          retrieve.rows.forEach(res => {
+            res.image = process.env.CDY_URL + res.image
+            res.cuisines = res.cuisines.replace(/,/g, ' | ')
+          })
           return res.json({valid: true, places: [...retrieve.rows]})
         }
       } catch (err) {
