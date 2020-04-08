@@ -1,6 +1,6 @@
 <template>
   <v-app>
-    <v-app-bar fixed elevation="3">
+    <v-app-bar fixed color="white" elevate-on-scroll>
       <v-app-bar-nav-icon
         @click.stop="drawer = !drawer"
       ></v-app-bar-nav-icon>
@@ -32,7 +32,7 @@
         </v-list-item>
       </v-list>
     </v-navigation-drawer>
-    <v-container class="pa-10 mt-10">
+    <v-container class="pa-10 mt-10" fluid>
       <v-row justify="center">
         <p class="title font-weight-regular">
           Reserve a restaurant table with voice commands. Use the search feature
@@ -40,7 +40,7 @@
         </p>
       </v-row>
       <v-row justify="center" class="mb-5">
-        <v-col cols="12" xs="12" sm="10" md="9">
+        <v-col cols="12" xs="12" sm="10" md="8">
           <v-form ref="form" @submit.prevent="textSearch">
             <v-text-field
               label="search..."
@@ -53,10 +53,13 @@
               prepend-inner-icon="mdi-magnify"
               append-icon="mdi-microphone"
               @click:append="voiceSearch"
-              @click:clear="getData"
+              @click:clear="loadRestaurants"
             ></v-text-field>
           </v-form>
         </v-col>
+      </v-row>
+      <v-row justify="center" class="mt-7">
+        <v-btn color="primary" @click="loadRestaurants">Explore</v-btn>
       </v-row>
       <v-row>
         <v-dialog
@@ -67,7 +70,7 @@
         >
           <v-card tile>
             <v-card-title class="title font-weight-regular">
-              search for areas, places, cuisines ....
+              search for restuarants, places, cuisines ....
               <v-spacer></v-spacer>
               <v-progress-circular
                 :indeterminate="infinite"
@@ -161,35 +164,41 @@
         fullscreen
         transition="dialog-bottom-transition"
       >
-        <v-card tile>
-          <v-toolbar class="primary white--text">
+        <v-card tile class="wrapper">
+          <v-app-bar class="orange darken-1 white--text" fixed flat>
             <v-btn icon @click="bookingDialog = false" color="white"
               ><v-icon>mdi-close</v-icon></v-btn
             >
-            <v-toolbar-title>{{ currentBooking.name }}</v-toolbar-title>
-            <v-spacer></v-spacer>
-            <v-toolbar-items>
-              <v-btn text color="white">Save</v-btn>
-            </v-toolbar-items>
-          </v-toolbar>
-          <v-row justify="center" class="mt-10">
-            <p class="display-1 font-weight-regular">Booking Details</p>
-          </v-row>
+            <v-toolbar-title>Booking Details</v-toolbar-title>
+          </v-app-bar>
+          <v-container class="pt-10 mt-10" fluid>
           <v-row justify="center">
-            <v-col cols="12" xs="10" sm="6" md="5">
-              <v-card  elevation="5">
-              <v-img :src="currentBooking.image" max-height="400px"/>
+            
+            <v-col cols="12" xs="12" sm="10" md="6">
+              <v-card  elevation="5" tile>
+                <v-img :src="currentBooking.image" max-height="400"/>
+              </v-card>
+
+              <v-card class="pa-2 mt-5" color="blue lighten-1 white--text" outlined>
+                <p class="center headline font-weight-medium">{{ currentBooking.name }}</p>
+                <p class="title font-weight-regular center">Popular Cuisines : <span class="subtitle font-weight-regular">{{ currentBooking.cuisines }}</span></p>
               </v-card>
             </v-col>
-            <v-col cols="12" xs="10" sm="6" md="5">
-              <v-text-field label="Name"></v-text-field>
+
+            <v-col cols="12" xs="12" sm="10" md="6">
+              <v-card outlined class="pa-5">
+                <v-form ref="book" @submit.prevent="handleReservation">
+                  <v-text-field label="Name" v-model="this.$store.state.user.username"></v-text-field>
+
+                </v-form>
+              </v-card>
             </v-col>
+            
           </v-row>
+          </v-container>
         </v-card>
       </v-dialog>
     </v-container>
-    {{ loadRestaurants }}
-    {{ initSpeechApi }}
   </v-app>
 </template>
 
@@ -215,9 +224,10 @@ export default {
       required: value => !!value || "Required"
     }
   }),
-  computed: {
-    initSpeechApi () {
-      const recognition =
+  
+  mounted () {
+    this.$store.dispatch('grabRestaurants')
+     const recognition =
       window.webkitSpeechRecognition || window.SpeechRecognition;
     if (!recognition) {
       this.voiceModule = true;
@@ -230,20 +240,19 @@ export default {
       recognize.maxAlternatives = 1;
       this.recognize = recognize;
     }
-    let voices = [];
-    const synthesis = window.speechSynthesis;
-    voices = synthesis.getVoices();
-    synthesis.onvoiceschanged = () => voices = synthesis.getVoices();
+
+    const setTextToSpeech = () => {
+      let voices = [];
+      const synthesis = window.speechSynthesis;
+      voices = synthesis.getVoices();
+      synthesis.onvoiceschanged = () => {
+      voices = synthesis.getVoices();
+      this.voice = voices[1];
       this.synthesis = synthesis;
-      this.voice = voices[2];
-    },
-    loadRestaurants() {
-      this.data = this.$store.getters.fetchRestaurants;
-    }
-  },
-  mounted () {
-    this.$store.dispatch('grabRestaurants')
-  },
+      }     
+    }      
+    setTimeout(setTextToSpeech, 500);
+  },     
   methods: {
     
     dictate(toSpeak) {
@@ -288,14 +297,6 @@ export default {
       this.recognize.stop()
       this.voiceDialog = false
     },
-
-    search(keyword, dictionary) {
-      console.log("Search called!");
-      console.log(`Keyword : ${keyword}`);
-      console.log(`Dictionary : ${dictionary}`);
-      const res = dictionary.filter(word => keyword === word);
-      return res.length ? true : false;
-    },
     async voiceSearch() {
       try {
         if (this.voiceModule) {
@@ -304,11 +305,12 @@ export default {
         }
         const result = await this.startCapturing(this.recognize);
         this.speech = result;
-        if (this.speech.includes('open' || 'book')) {
-          if (this.speech.includes('open the first' || 'book the first')) {
-            
+        if (result.toLowerCase().includes('open' || 'book')) {
+          if (result.toLowerCase().includes('open the first' || 'book the first')) {
+           return this.bindClick(this.data[0])
+          } else if (result.toLowerCase().includes('open the second' || 'book the second')) {
+            return this.bindClick(this.data[1])
           }
-          return
         }
         let results = this.$store.getters.searchRestaurant(this.speech.toLowerCase());
         if (results.length) {
@@ -323,19 +325,28 @@ export default {
     },
 
     textSearch() {
+      console.log(this.voice)
       if (this.speech === "") {
         return;
       }
       this.data = this.$store.getters.searchRestaurant(this.speech.toLowerCase());
     },
-    getData() {
+
+    loadRestaurants() {
       this.data = this.$store.getters.fetchRestaurants;
     },
+
     bindClick(hotel) {
       this.bookingDialog = true;
       this.currentBooking = hotel;
     },
-    
+    formatTimings: time => {
+      if (!time) {
+        return
+      } else {
+        console.log(`Timings are :${time}`)
+      }
+    },
     logout() {
       this.$router.go("/login");
       document.cookie =
@@ -348,6 +359,12 @@ export default {
 
 <style scoped>
 #app {
-  background-color: #f5f5f5;
+  background-color: #fff;
+}
+.wrapper {
+  overflow: hidden;
+}
+.center {
+ text-align: center;
 }
 </style>
