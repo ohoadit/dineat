@@ -124,10 +124,10 @@ admitRouter.post('/renew', (req, res, next) => {
   jwt.verify(req.cookies['Dineat'], process.env.LOB, async (err, payload) => {
     try {
       if (!err && payload.username === "feedbackloop08") {
-        const email = req.body.username + '@'+ req.body.domain
+        const email = req.body.username + '@' + req.body.domain
         const setter = resetKey();
         const time = Math.floor(Date.now() / 1000);
-        const update = await pool.query('Update authorized set token = $1, stamp = $2 where username = $3', [setter, time, username])
+        const update = await pool.query('Update authorized set token = $1, stamp = $2 where username = $3', [setter, time, req.body.username])
         return await mailer(res, email, setter, req.headers.host);
       } else {
         return res.status(401).json({sent: false, msg: "You ain't Ad!"})
