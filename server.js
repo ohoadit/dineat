@@ -5,6 +5,7 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 const cookieParser = require('cookie-parser');
 const morgan = require("morgan");
+const compression = require("compression");
 const app = express();
 
 const loginRouter = require("./routes/login");
@@ -15,6 +16,7 @@ const masterRouter = require("./routes/master");
 app
   .use(morgan("dev"))
   .use(cors())
+  .use(compression())
   .use(bodyParser.urlencoded({ extended: false }))
   .use(bodyParser.json())
   .use(cookieParser())
