@@ -1,38 +1,23 @@
 <template>
   <v-app>
     <v-app-bar fixed color="white" elevate-on-scroll>
-      <v-app-bar-nav-icon
-        @click.stop="drawer = !drawer"
-      ></v-app-bar-nav-icon>
-      <v-toolbar-title class="headline">Dineat</v-toolbar-title>
+      <v-toolbar-title class="appTitle font-weight-medium primary--text"
+        >Dineat</v-toolbar-title
+      >
       <v-spacer></v-spacer>
       <v-toolbar-items>
         <v-btn text @click="logout" color="primary">
-          <v-icon left>mdi-logout</v-icon>Logout
+          <v-icon left size="24">mdi-logout</v-icon>Logout
         </v-btn>
       </v-toolbar-items>
     </v-app-bar>
-    <v-navigation-drawer v-model="drawer" absolute temporary>
-      <v-list>
-        <v-list-item>
-          <v-list-item-content class="headline">
-            {{ this.$store.state.user.username }}
-          </v-list-item-content>
-        </v-list-item>
-        <v-divider></v-divider>
-        <v-list-item link>
-          <v-list-item-icon>
-            <v-icon left>mdi-book-open</v-icon>
-          </v-list-item-icon>
-          <v-list-item-content class="title font-weight-regular">
-            <v-list-item-title>
-              My bookings
-            </v-list-item-title>
-          </v-list-item-content>
-        </v-list-item>
-      </v-list>
-    </v-navigation-drawer>
-    <v-container class="pa-10 mt-10" fluid>
+
+    <v-container class="pa-10 mt-10 wrapper" fluid>
+      <v-row justify="center">
+        <p class="primary--text greeting">
+          Hi {{ this.$store.state.user.username }}
+        </p>
+      </v-row>
       <v-row justify="center">
         <p class="title font-weight-regular">
           Reserve a restaurant table with voice commands. Use the search feature
@@ -43,7 +28,7 @@
         <v-col cols="12" xs="12" sm="10" md="8">
           <v-form ref="form" @submit.prevent="textSearch">
             <v-text-field
-              label="search..."
+              label="search"
               v-model="speech"
               :value="speech"
               hide-details
@@ -53,12 +38,11 @@
               prepend-inner-icon="mdi-magnify"
               append-icon="mdi-microphone"
               @click:append="voiceSearch"
-              @click:clear="loadRestaurants"
             ></v-text-field>
           </v-form>
         </v-col>
       </v-row>
-      <v-row justify="center" class="mt-7">
+      <v-row justify="center" class="mt-7" align="center">
         <v-btn color="primary" @click="loadRestaurants">Explore</v-btn>
       </v-row>
       <v-row>
@@ -70,7 +54,7 @@
         >
           <v-card tile>
             <v-card-title class="title font-weight-regular">
-              search for restuarants, places, cuisines ....
+              search for, places, cuisines ....
               <v-spacer></v-spacer>
               <v-progress-circular
                 :indeterminate="infinite"
@@ -79,7 +63,9 @@
             </v-card-title>
             <v-card-actions>
               <v-spacer></v-spacer>
-              <v-btn color="red lighten-1 white--text" @click="stopCapturing">Stop</v-btn>
+              <v-btn color="red lighten-1 white--text" @click="stopCapturing"
+                >Stop</v-btn
+              >
               <v-spacer></v-spacer>
             </v-card-actions>
           </v-card>
@@ -137,12 +123,25 @@
           :key="index"
         >
           <v-hover v-slot:default="{ hover }">
-            <v-card
-              @click="bindClick(restaurant)"
-              tile
-              :elevation="hover ? 10 : 2"
-            >
-              <v-img :src="restaurant.image" max-height="300px"></v-img>
+            <v-card @click="bindClick(restaurant)" :elevation="hover ? 10 : 2">
+              <v-img
+                max-height="300px"
+                :src="restaurant.image"
+                class="blue-grey lighten-5"
+                aspect-ratio="1"
+              >
+                <template v-slot:placeholder>
+                  <v-row
+                    class="fill-height blue-grey lighten-5"
+                    align="center"
+                    justify="center"
+                    ><v-progress-circular
+                      indeterminate
+                      color="primary lighten-1"
+                    ></v-progress-circular
+                  ></v-row>
+                </template>
+              </v-img>
               <v-card-title>
                 {{ restaurant.name }}
               </v-card-title>
@@ -162,39 +161,76 @@
       <v-dialog
         v-model="bookingDialog"
         fullscreen
+        hide-overlay
         transition="dialog-bottom-transition"
       >
-        <v-card tile class="wrapper">
-          <v-app-bar class="orange darken-1 white--text" fixed flat>
+        <v-card tile class="dialogWrapper">
+          <v-app-bar
+            class="orange darken-1 white--text"
+            fixed
+            elevate-on-scroll
+          >
             <v-btn icon @click="bookingDialog = false" color="white"
               ><v-icon>mdi-close</v-icon></v-btn
             >
-            <v-toolbar-title>Booking Details</v-toolbar-title>
+            <v-toolbar-title class="title">Booking Details</v-toolbar-title>
           </v-app-bar>
           <v-container class="pt-10 mt-10" fluid>
-          <v-row justify="center">
-            
-            <v-col cols="12" xs="12" sm="10" md="6">
-              <v-card  elevation="5" tile>
-                <v-img :src="currentBooking.image" max-height="400"/>
-              </v-card>
+            <v-row justify="space-around">
+              <v-col cols="12" xs="12" sm="10" md="5">
+                <v-card elevation="5" tile>
+                  <v-img :src="currentBooking.image" max-height="400" />
+                </v-card>
+                <v-card
+                  class="pa-2 mt-5 primary lighten-1 white--text"
+                  elevation="3"
+                >
+                  <p class="center headline font-weight-medium">
+                    {{ currentBooking.name }}
+                  </p>
+                  <p class="title center">
+                    <span class="subtitle">
+                      {{ currentBooking.cuisines }}
+                    </span>
+                  </p>
 
-              <v-card class="pa-2 mt-5" color="blue lighten-1 white--text" outlined>
-                <p class="center headline font-weight-medium">{{ currentBooking.name }}</p>
-                <p class="title font-weight-regular center">Popular Cuisines : <span class="subtitle font-weight-regular">{{ currentBooking.cuisines }}</span></p>
-              </v-card>
-            </v-col>
+                  <div class="title center" v-if="bookingDialog">
+                    Open Time:
+                    {{ formatTimings(currentBooking.time) }}
+                  </div>
+                </v-card>
+              </v-col>
 
-            <v-col cols="12" xs="12" sm="10" md="6">
-              <v-card outlined class="pa-5">
-                <v-form ref="book" @submit.prevent="handleReservation">
-                  <v-text-field label="Name" v-model="this.$store.state.user.username"></v-text-field>
-
-                </v-form>
-              </v-card>
-            </v-col>
-            
-          </v-row>
+              <v-col cols="12" xs="12" sm="10" md="5">
+                <v-card class="pa-5" flat>
+                  <div class="center headline mb-5">Reservation</div>
+                  <v-form ref="book" @submit.prevent="handleReservation">
+                    <v-text-field
+                      label="Name"
+                      class="title font-weight-regular"
+                      :rules="[rules.isEmpty]"
+                      v-model="this.$store.state.user.username"
+                    ></v-text-field>
+                    <v-select
+                      label="Guests"
+                      :items="guest"
+                      v-model="guests"
+                      :rules="[rules.isEmpty]"
+                    ></v-select>
+                    <v-row justify="center">
+                      <v-time-picker
+                        :allowed-hours="permittedHrs"
+                        :allowed-minutes="[0, 30]"
+                        scrollable
+                        v-model="time"
+                        color="primary"
+                        format="24hr"
+                      ></v-time-picker>
+                    </v-row>
+                  </v-form>
+                </v-card>
+              </v-col>
+            </v-row>
           </v-container>
         </v-card>
       </v-dialog>
@@ -213,21 +249,34 @@ export default {
     voiceDialog: false,
     voiceModule: false,
     alert: false,
-    drawer: false,
     bookingDialog: false,
     currentBooking: {},
+    stylePicker: "",
     data: [],
-    successCommands: ["Here are some results!", "This is what I got!", "Search results are as follows"],
-    failureCommands: ["No match found!", "No such places or cuisines!", "Sorry no matching result!"],
+    successCommands: [
+      "Here are some results!",
+      "This is what I got!",
+      "Search results are as follows",
+    ],
+    failureCommands: [
+      "No match found!",
+      "No such places or cuisines!",
+      "Sorry no matching result!",
+    ],
     infinite: true,
     rules: {
-      required: value => !!value || "Required"
-    }
+      isEmpty: (value) => !!value || "Should not be empty",
+    },
+    guest: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+    guests: "",
+    time: "",
+    limit: [],
+    permittedHrs: [],
   }),
-  
-  mounted () {
-    this.$store.dispatch('grabRestaurants')
-     const recognition =
+
+  mounted() {
+    this.$store.dispatch("grabRestaurants");
+    const recognition =
       window.webkitSpeechRecognition || window.SpeechRecognition;
     if (!recognition) {
       this.voiceModule = true;
@@ -245,16 +294,22 @@ export default {
       let voices = [];
       const synthesis = window.speechSynthesis;
       voices = synthesis.getVoices();
-      synthesis.onvoiceschanged = () => {
-      voices = synthesis.getVoices();
       this.voice = voices[1];
       this.synthesis = synthesis;
-      }     
-    }      
-    setTimeout(setTextToSpeech, 500);
-  },     
+      if (!voices.length) {
+        synthesis.onvoiceschanged = () => {
+          voices = synthesis.getVoices();
+          let googleVoice = voices.filter((voice) =>
+            voice.name.includes("Google" && "US")
+          );
+          this.voice = googleVoice.length ? googleVoice[0] : voices[1];
+          this.synthesis = synthesis;
+        };
+      }
+    };
+    setTimeout(setTextToSpeech, 1000);
+  },
   methods: {
-    
     dictate(toSpeak) {
       if (this.synthesis.speaking) {
         return;
@@ -268,16 +323,16 @@ export default {
 
     startCapturing(recognize) {
       const promise = new Promise((solved, denied) => {
-        recognize.onstart = () => this.voiceDialog = true;
+        recognize.onstart = () => (this.voiceDialog = true);
 
         recognize.onspeechend = () => {
           recognize.stop();
           this.voiceDialog = false;
         };
 
-        recognize.onresult = event => solved(event.results[0][0].transcript);
+        recognize.onresult = (event) => solved(event.results[0][0].transcript);
 
-        recognize.onerror = err => {
+        recognize.onerror = (err) => {
           this.voiceDialog = false;
           let error = "";
           if (err.error === "no-speech") {
@@ -293,9 +348,9 @@ export default {
       });
       return promise;
     },
-    stopCapturing () {
-      this.recognize.stop()
-      this.voiceDialog = false
+    stopCapturing() {
+      this.recognize.stop();
+      this.voiceDialog = false;
     },
     async voiceSearch() {
       try {
@@ -305,17 +360,21 @@ export default {
         }
         const result = await this.startCapturing(this.recognize);
         this.speech = result;
-        if (result.toLowerCase().includes('open' || 'book')) {
-          if (result.toLowerCase().includes('open the first' || 'book the first')) {
-           return this.bindClick(this.data[0])
-          } else if (result.toLowerCase().includes('open the second' || 'book the second')) {
-            return this.bindClick(this.data[1])
+        if (result.toLowerCase().includes("open" || "book")) {
+          if (result.toLowerCase().includes("open first" || "book first")) {
+            return this.bindClick(this.data[0]);
+          } else if (
+            result.toLowerCase().includes("open second" || "book second")
+          ) {
+            return this.bindClick(this.data[1]);
           }
         }
-        let results = this.$store.getters.searchRestaurant(this.speech.toLowerCase());
+        let results = this.$store.getters.searchRestaurant(
+          this.speech.toLowerCase()
+        );
         if (results.length) {
-          this.dictate(this.successCommands[Math.floor(Math.random() * 3)])
-          this.data = [...results]
+          this.dictate(this.successCommands[Math.floor(Math.random() * 3)]);
+          this.data = [...results];
         } else {
           this.dictate(this.failureCommands[Math.floor(Math.random() * 3)]);
         }
@@ -325,11 +384,12 @@ export default {
     },
 
     textSearch() {
-      console.log(this.voice)
       if (this.speech === "") {
         return;
       }
-      this.data = this.$store.getters.searchRestaurant(this.speech.toLowerCase());
+      this.data = this.$store.getters.searchRestaurant(
+        this.speech.toLowerCase()
+      );
     },
 
     loadRestaurants() {
@@ -340,31 +400,58 @@ export default {
       this.bookingDialog = true;
       this.currentBooking = hotel;
     },
-    formatTimings: time => {
-      if (!time) {
-        return
-      } else {
-        console.log(`Timings are :${time}`)
+
+    setTimes([t1, t2]) {
+      const temp = [];
+      for (let i = Number(t1); i < Number(t2); i++) {
+        temp.push(i);
       }
+      return temp;
+    },
+    formatTimings(time) {
+      time = "11-15";
+      if (time.includes(" ")) {
+        const [day, eve] = time.split(" ");
+        const [startA, startB] = day.split("-");
+        const [startC, startD] = eve.split("-");
+      } else {
+        console.time("Set");
+        const [a, b] = time.split("-");
+        this.setTimes(time.split("-"));
+        console.timeEnd("Set");
+      }
+      return time;
     },
     logout() {
-      this.$router.go("/login");
+      this.$router.push("/login");
       document.cookie =
         "Dineat=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
       this.$store.commit("sessionEnded");
-    }
-  }
+    },
+  },
 };
 </script>
 
 <style scoped>
-#app {
-  background-color: #fff;
+.appTitle {
+  font-size: 28px;
+}
+.greeting {
+  font-size: 24px;
+  letter-spacing: 2px;
 }
 .wrapper {
+  background-color: #fff;
+}
+.buttonWrapper {
+  background-color: #efefef;
+}
+.dialogWrapper {
+  background-color: #fff;
   overflow: hidden;
 }
 .center {
- text-align: center;
+  text-align: center;
+  font-weight: normal;
 }
 </style>
