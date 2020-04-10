@@ -1,6 +1,6 @@
 <template>
   <v-app>
-    <v-container v-if="this.$vuetify.breakpoint.xsOnly" fluid>
+    <v-container v-if="this.$vuetify.breakpoint.xsOnly" fluid class="wrapper">
       <v-row class="pa-10" justify="center">
         <v-col>
           <p class="display-1 font-weight-regular" align="center">Dineat</p>
@@ -46,7 +46,7 @@
         </v-col>
       </v-row>
     </v-container>
-    <v-container v-if="this.$vuetify.breakpoint.smAndUp" fluid>
+    <v-container v-if="this.$vuetify.breakpoint.smAndUp" fluid class="wrapper">
       <v-row class="mt-10">
         <v-col cols="12">
           <p class="display-1 font-weight-regular" align="center">Dineat</p>
@@ -88,11 +88,7 @@
                         tile
                         >Signup</v-btn
                       >
-                      <v-btn
-                        color="primary"
-                        type="submit"
-                        tile
-                        width="90"
+                      <v-btn color="primary" type="submit" tile width="90"
                         >Signin</v-btn
                       >
                     </v-row>
@@ -165,8 +161,8 @@ export default {
     message: "",
     color: "",
     rules: {
-      isEmpty: v => !!v || "Should not be empty",
-      checkLength: v => v.length >= 8 || "Minimum 8 characters",
+      isEmpty: (v) => !!v || "Should not be empty",
+      checkLength: (v) => v.length >= 8 || "Minimum 8 characters",
     },
   }),
 
@@ -190,9 +186,7 @@ export default {
       });
       let res = await response.json();
       if (res.matched) {
-        res.admin
-          ? this.$router.push("/admin")
-          : this.$router.push("/dashboard");
+        res.admin ? this.$router.push("/admin") : this.$router.push("/dashboard");
         this.$store.commit("setUser", {
           username: this.username,
           cookie: document.cookie,
@@ -238,4 +232,9 @@ export default {
 };
 </script>
 
-<style scoped></style>
+<style scoped>
+.wrapper {
+  background-color: #f6f7f9;
+  height: 100%;
+}
+</style>
