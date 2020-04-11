@@ -1,6 +1,6 @@
 <template>
   <v-app>
-    <v-app-bar fixed color="white" elevate-on-scroll>
+    <v-app-bar fixed color="#f5f5f5" elevate-on-scroll>
       <v-toolbar-title class="appTitle font-weight-medium primary--text"
         >Dineat</v-toolbar-title
       >
@@ -145,15 +145,16 @@
               <v-card-title>
                 {{ restaurant.name }}
               </v-card-title>
-              <v-card-text class="subtitle">
-                <div>
-                  {{ restaurant.speciality }}
-                </div>
+              <div class="cardItems pa-5">
                 <div>
                   <v-icon>mdi-map-marker</v-icon>
                   {{ restaurant.location }}
                 </div>
-              </v-card-text>
+                <div>
+                  <v-icon left>mdi-food-fork-drink</v-icon>
+                  {{ restaurant.speciality }}
+                </div>
+              </div>
             </v-card>
           </v-hover>
         </v-col>
@@ -173,7 +174,7 @@
             <v-btn icon @click="bookingDialog = false" color="white"
               ><v-icon>mdi-close</v-icon></v-btn
             >
-            <v-toolbar-title class="title">Booking Details</v-toolbar-title>
+            <v-toolbar-title class="title">Guest Details</v-toolbar-title>
           </v-app-bar>
           <v-container class="pt-10 mt-10" fluid>
             <v-row justify="space-around">
@@ -188,44 +189,97 @@
                   <p class="center headline font-weight-medium">
                     {{ currentBooking.name }}
                   </p>
-                  <p class="title center">
-                    <span class="subtitle">
-                      {{ currentBooking.cuisines }}
-                    </span>
+                  <p class="center">
+                    {{ currentBooking.cuisines }}
                   </p>
-
-                  <div class="title center" v-if="bookingDialog">
+                  <v-divider color="white"></v-divider>
+                  <div class="center" v-if="bookingDialog">
                     Open Time:
                     {{ formatTimings(currentBooking.time) }}
                   </div>
+                  <p class="center mt-2">
+                    Location:
+                    {{ currentBooking.location }}
+                  </p>
                 </v-card>
               </v-col>
 
               <v-col cols="12" xs="12" sm="10" md="5">
+                <p class="center headline font-weight-medium">Book Now</p>
                 <v-card class="pa-5" flat>
-                  <div class="center headline mb-5">Reservation</div>
                   <v-form ref="book" @submit.prevent="handleReservation">
                     <v-text-field
                       label="Name"
-                      class="title font-weight-regular"
-                      :rules="[rules.isEmpty]"
                       v-model="this.$store.state.user.username"
+                      class="title font-weight-regular"
+                      prepend-icon=""
+                      :rules="[rules.isEmpty]"
                     ></v-text-field>
                     <v-select
                       label="Guests"
                       :items="guest"
                       v-model="guests"
+                      prepend-icon="mdi-account-multiple"
                       :rules="[rules.isEmpty]"
                     ></v-select>
-                    <v-row justify="center">
+                    <v-menu
+                      v-model="dateMenu"
+                      :close-on-content-click="false"
+                      :nudge-right="40"
+                      transition="scale-transition"
+                      offset-y
+                      min-width="290px"
+                    >
+                      <template v-slot:activator="{ on }">
+                        <v-text-field
+                          v-model="date"
+                          label="Choose Date"
+                          prepend-icon="mdi-calendar"
+                          readonly
+                          v-on="on"
+                          :rules="[rules.isEmpty]"
+                        ></v-text-field>
+                      </template>
+                      <v-date-picker
+                        v-model="date"
+                        no-title
+                        :allowed-dates="permittedDates"
+                        @input="dateMenu = false"
+                      ></v-date-picker>
+                    </v-menu>
+                    <v-menu
+                      v-model="timeMenu"
+                      :close-on-content-click="false"
+                      :nudge-right="40"
+                      transition="scale-transition"
+                      offset-y
+                      min-width="290px"
+                    >
+                      <template v-slot:activator="{ on }">
+                        <v-text-field
+                          v-model="time"
+                          label="Choose Time"
+                          prepend-icon="mdi-clock-outline"
+                          readonly
+                          v-on="on"
+                          :rules="[rules.isEmpty]"
+                        ></v-text-field>
+                      </template>
                       <v-time-picker
                         :allowed-hours="permittedHrs"
                         :allowed-minutes="[0, 30]"
                         scrollable
                         v-model="time"
-                        color="primary"
+                        @input="timeMenu = false"
+                        color="primary lighten-1"
                         format="24hr"
+                        class="mt-5"
                       ></v-time-picker>
+                    </v-menu>
+                    <v-row justify="center" class="mt-10">
+                      <v-btn color="primary lighten-1" tile type="submit"
+                        >Reserve</v-btn
+                      >
                     </v-row>
                   </v-form>
                 </v-card>
@@ -251,29 +305,30 @@ export default {
     alert: false,
     bookingDialog: false,
     currentBooking: {},
-    stylePicker: "",
+    infinite: true,
     data: [],
     successCommands: [
       "Here are some results!",
       "This is what I got!",
-      "Search results are as follows",
+      "Search results are as follows"
     ],
     failureCommands: [
       "No match found!",
       "No such places or cuisines!",
-      "Sorry no matching result!",
+      "Sorry no matching result!"
     ],
-    infinite: true,
+    dateMenu: false,
+    timeMenu: false,
     rules: {
-      isEmpty: (value) => !!value || "Should not be empty",
+      isEmpty: value => !!value || "Should not be empty"
     },
     guest: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
     guests: "",
     time: "",
-    limit: [],
-    permittedHrs: [],
+    date: "",
+    dates: [],
+    limit: []
   }),
-
   mounted() {
     this.$store.dispatch("grabRestaurants");
     const recognition =
@@ -299,8 +354,8 @@ export default {
       if (!voices.length) {
         synthesis.onvoiceschanged = () => {
           voices = synthesis.getVoices();
-          let googleVoice = voices.filter((voice) =>
-            voice.name.includes("Google" && "US")
+          let googleVoice = voices.filter(voice =>
+            voice.name.includes("Google" && "Female")
           );
           this.voice = googleVoice.length ? googleVoice[0] : voices[1];
           this.synthesis = synthesis;
@@ -308,6 +363,17 @@ export default {
       }
     };
     setTimeout(setTextToSpeech, 1000);
+    const currentDate = new Date();
+    const tDays = new Date(
+      currentDate.getFullYear,
+      currentDate.getMonth,
+      0
+    ).getDate();
+    console.log(tDays);
+    for (let i = currentDate; i <= currentDate + 7; i++) {
+      this.dates.push(i);
+    }
+    currentDate.forEach(date => {});
   },
   methods: {
     dictate(toSpeak) {
@@ -330,9 +396,9 @@ export default {
           this.voiceDialog = false;
         };
 
-        recognize.onresult = (event) => solved(event.results[0][0].transcript);
+        recognize.onresult = event => solved(event.results[0][0].transcript);
 
-        recognize.onerror = (err) => {
+        recognize.onerror = err => {
           this.voiceDialog = false;
           let error = "";
           if (err.error === "no-speech") {
@@ -400,8 +466,7 @@ export default {
       this.bookingDialog = true;
       this.currentBooking = hotel;
     },
-
-    setTimes([t1, t2]) {
+    setLimit([t1, t2]) {
       const temp = [];
       for (let i = Number(t1); i < Number(t2); i++) {
         temp.push(i);
@@ -409,26 +474,44 @@ export default {
       return temp;
     },
     formatTimings(time) {
-      time = "11-15";
       if (time.includes(" ")) {
         const [day, eve] = time.split(" ");
-        const [startA, startB] = day.split("-");
-        const [startC, startD] = eve.split("-");
+        this.limit = [
+          ...this.setLimit(day.split("-")),
+          ...this.setLimit(eve.split("-"))
+        ];
+        return time.replace(" ", " & ");
       } else {
-        console.time("Set");
         const [a, b] = time.split("-");
-        this.setTimes(time.split("-"));
-        console.timeEnd("Set");
+        this.limit = this.setLimit(time.split("-"));
+        return time;
       }
-      return time;
+    },
+    permittedDates(date) {
+      if (
+        Number(date.split("-")[2]) < currentDate + 7 &&
+        Number(date.split("-")[2]) >= currentDate
+      ) {
+        return date;
+      }
+    },
+    permittedHrs(hr) {
+      if (this.limit.includes(hr) && hr > new Date().getHours()) {
+        return hr;
+      }
+    },
+    handleReservation() {
+      if (!this.$refs.book.validate()) {
+        return;
+      }
     },
     logout() {
       this.$router.push("/login");
       document.cookie =
         "Dineat=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
       this.$store.commit("sessionEnded");
-    },
-  },
+    }
+  }
 };
 </script>
 
@@ -438,10 +521,17 @@ export default {
 }
 .greeting {
   font-size: 24px;
-  letter-spacing: 2px;
+  letter-spacing: 1px;
+}
+.cardItems {
+  display: flex;
+  justify-content: space-between;
+  align-content: center;
+  font-size: 18px;
 }
 .wrapper {
-  background-color: #fff;
+  background-color: #f5f5f5;
+  height: 100%;
 }
 .buttonWrapper {
   background-color: #efefef;
@@ -453,5 +543,13 @@ export default {
 .center {
   text-align: center;
   font-weight: normal;
+  font-size: 18px;
+  margin-top: 10;
+}
+
+@media screen and (max-width: 600px) {
+  .center {
+    font-size: 15px;
+  }
 }
 </style>
