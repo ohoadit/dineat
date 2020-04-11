@@ -3,7 +3,7 @@ const express = require("express");
 const admitRouter = express.Router();
 const nodemailer = require("nodemailer");
 const { pool, bcrypt } = require("../auth");
-const jwt = require('jsonwebtoken')
+const jwt = require("jsonwebtoken");
 
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
@@ -15,16 +15,14 @@ const transporter = nodemailer.createTransport({
     clientId: process.env.C_ID,
     clientSecret: process.env.C_KEY,
     refreshToken: process.env.REFRESH,
-    accessToken: process.env.ACCESS
-  }
+    accessToken: process.env.ACCESS,
+  },
 });
 
 const resetKey = () => {
   let subs = "";
   for (let i = 0; i < 4; i++) {
-    subs += Math.random()
-      .toString(16)
-      .substr(2);
+    subs += Math.random().toString(16).substr(2);
     if (i != 3) subs += "-";
   }
   return subs;
@@ -40,7 +38,7 @@ const signature = async (req, res) => {
     if (handshake.rowCount === 0) {
       res.json({ valid: false });
       return {
-        approved: false
+        approved: false,
       };
     } else {
       const current = Math.floor(Date.now() / 1000);
@@ -48,19 +46,19 @@ const signature = async (req, res) => {
       if (current > stamp + 3600) {
         res.json({ valid: false, msg: "Link expired register again!" });
         return {
-          approved: false
+          approved: false,
         };
       } else {
         return {
           approved: true,
-          payload: handshake.rows[0]
+          payload: handshake.rows[0],
         };
       }
     }
   } catch (err) {
     res.status(500).json({ valid: false, msg: "Server Error" });
     return {
-      approved: false
+      approved: false,
     };
   }
 };
@@ -82,7 +80,7 @@ admitRouter.post("/enroll", async (req, res, next) => {
       );
       return res.json({
         valid: true,
-        msg: "New password set. Redirecting to login !"
+        msg: "New password set. Redirecting to login !",
       });
     } catch (err) {
       console.log(err.stack);
@@ -94,11 +92,15 @@ admitRouter.post("/enroll", async (req, res, next) => {
 admitRouter.post("/register", async (req, res) => {
   try {
     const email = req.body.email;
-    const rex = /^[a-zA-Z0-9](\.?[a-zA-Z0-9]){5,}@(gmail\.com|(iite\.)?indusuni\.ac\.in)$/
+    const rex = /^[a-zA-Z0-9](\.?[a-zA-Z0-9]){5,}@(gmail\.com|(iite\.)?indusuni\.ac\.in)$/;
     if (!rex.test(email)) {
-      return res.json({sent: false, field: 'emailError', msg: "Invalid email. Please use gmail/college id"})
+      return res.json({
+        sent: false,
+        field: "emailError",
+        msg: "Invalid email. Please use gmail/college id",
+      });
     }
-    const user = email.split("@")[0];
+    const [user, domain] = email.split("@");
     const check = await pool.query(
       "select * from authorized where username = $1",
       [user]
@@ -107,8 +109,8 @@ admitRouter.post("/register", async (req, res) => {
       const setter = resetKey();
       const time = Math.floor(Date.now() / 1000);
       const entry = await pool.query(
-        "insert into authorized(username, token, stamp) values ($1, $2, $3)",
-        [user, setter, time]
+        "insert into authorized(username, token, stamp, domain) values ($1, $2, $3, $4)",
+        [user, setter, time, domain]
       );
       await mailer(res, email, setter, req.headers.host);
     } else {
@@ -116,28 +118,31 @@ admitRouter.post("/register", async (req, res) => {
     }
   } catch (err) {
     console.log(err);
-    return res.status(500).json({msg: "Internal Server Error", sent: false});
+    return res.status(500).json({ msg: "Internal Server Error", sent: false });
   }
 });
-  
-admitRouter.post('/renew', (req, res, next) => {
-  jwt.verify(req.cookies['Dineat'], process.env.LOB, async (err, payload) => {
+
+admitRouter.post("/renew", (req, res, next) => {
+  jwt.verify(req.cookies["Dineat"], process.env.LOB, async (err, payload) => {
     try {
       if (!err && payload.username === "feedbackloop08") {
-        const email = req.body.username + '@' + req.body.domain
+        const email = req.body.username + "@" + req.body.domain;
         const setter = resetKey();
         const time = Math.floor(Date.now() / 1000);
-        const update = await pool.query('Update authorized set token = $1, stamp = $2 where username = $3', [setter, time, req.body.username])
+        const update = await pool.query(
+          "Update authorized set token = $1, stamp = $2 where username = $3",
+          [setter, time, req.body.username]
+        );
         return await mailer(res, email, setter, req.headers.host);
       } else {
-        return res.status(401).json({sent: false, msg: "You ain't Ad!"})
+        return res.status(401).json({ sent: false, msg: "You ain't Ad!" });
       }
-    } catch(err) {
-      console.log(err)
-      return res.status(500).json({sent: false, msg: "Email not sent :/"})
+    } catch (err) {
+      console.log(err);
+      return res.status(500).json({ sent: false, msg: "Email not sent :/" });
     }
-  })
-})
+  });
+});
 
 const mailer = (res, email, setter, host) => {
   const emailPromise = new Promise((kept, broken) => {
@@ -146,16 +151,19 @@ const mailer = (res, email, setter, host) => {
       from: "Dineat <feedbackloop08@gmail.com>",
       to: email,
       subject: "Set your password for Dineat",
-      html: `Welcome! <br> <br> Your username for the Dineat app is ${user}. Please use the following link to set your password. Link is valid for 60 minutes from now. <br> <br> http://${host}/reset/${setter}`
+      html: `Welcome! <br> <br> Your username for the Dineat app is ${user}. Please use the following link to set your password. Link is valid for 60 minutes from now. <br> <br> http://${host}/reset/${setter}`,
     };
     transporter.sendMail(message, (err, result) => {
       if (err) {
         console.log(err);
-        broken({ msg: "Email not sent :/", sent: false});
+        broken({ msg: "Email not sent :/", sent: false });
       } else {
         console.log(result);
-        res.json({ msg: "A password setter link has been sent to your email address.", sent: true });
-        kept("Email sent successfully")
+        res.json({
+          msg: "A password setter link has been sent to your email address.",
+          sent: true,
+        });
+        kept("Email sent successfully");
       }
       transporter.close();
     });
