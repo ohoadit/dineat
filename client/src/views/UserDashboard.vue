@@ -9,7 +9,7 @@
       >
       <v-spacer></v-spacer>
       <v-btn class="primary--text" depressed>
-        {{ this.$store.state.user.username }}
+        {{ name }}
       </v-btn>
       <v-toolbar-items>
         <v-btn text @click="logout" color="primary">
@@ -212,7 +212,7 @@
                   <v-form ref="book" @submit.prevent="handleReservation">
                     <v-text-field
                       label="Name"
-                      v-model="this.$store.state.user.username"
+                      v-model="name"
                       class="title font-weight-regular"
                       prepend-icon="mdi-checkbook"
                       :rules="[rules.isEmpty]"
@@ -256,7 +256,6 @@
                       transition="scale-transition"
                       offset-y
                       min-width="290px"
-                      max-width="290px"
                     >
                       <template v-slot:activator="{ on }">
                         <v-text-field
@@ -335,6 +334,11 @@ export default {
     dates: [],
     limit: []
   }),
+  computed: {
+    name() {
+      return this.$store.state.user.username;
+    }
+  },
   mounted() {
     this.$store.dispatch("grabRestaurants");
     const recognition =
@@ -467,7 +471,7 @@ export default {
       });
       const dateTime = await data.json();
       this.dates = dateTime.dates;
-      this.today = new Date(this.dates[0]);
+      this.today = new Date(dateTime.today);
     },
     setLimit([t1, t2]) {
       const temp = [];
@@ -502,6 +506,7 @@ export default {
       if (!this.date) {
         return;
       }
+
       if (this.date === this.dates[0]) {
         if (this.limit.includes(hr) && hr > this.today.getHours()) {
           return hr;
@@ -510,13 +515,30 @@ export default {
         return hr;
       }
     },
-    handleReservation() {
+    async handleReservation() {
       if (!this.$refs.book.validate()) {
         return;
       }
+      const ack = await fetch("/bank/book", {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json"
+        },
+        credentials: "same-origin",
+        body: JSON.stringify({
+          name: this.name,
+          guests: this.guests,
+          date: this.date,
+          time: this.time
+        })
+      });
+      const saved = await ack.json();
+      console.log(saved);
     },
     logout() {
-      this.$router.push("/login");
+      console.log("On logout");
+      this.$router.go(-1);
       document.cookie =
         "Dineat=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
       this.$store.commit("sessionEnded");

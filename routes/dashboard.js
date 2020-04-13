@@ -1,6 +1,8 @@
 const express = require("express");
 const dashboardRouter = express.Router();
 const jwt = require("jsonwebtoken");
+const { pool } = require("../auth");
+const { uniqueKey } = require("./register");
 
 dashboardRouter.get("/", (req, res, next) => {
   const name = "Dineat";
@@ -18,13 +20,14 @@ dashboardRouter.get("/", (req, res, next) => {
   });
 });
 
+let dates = [];
+
 dashboardRouter.post("/dates", (req, res, next) => {
   jwt.verify(req.cookies["Dineat"], process.env.LOB, (err, payload) => {
     if (!err) {
       const date = new Date();
-      const dates = [];
       let unformatted = "";
-      let today;
+      let today = date.toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
       for (let i = 1; i <= 15; i++) {
         unformatted = date
           .toLocaleString("en-US", {
@@ -39,10 +42,19 @@ dashboardRouter.post("/dates", (req, res, next) => {
         dates.push(unformatted.join("-"));
         date.setDate(date.getDate() + 1);
       }
-
       return res.json({
         dates: dates,
+        today: today,
       });
+    }
+  });
+});
+
+dashboardRouter.post("/book", (req, res, next) => {
+  jwt.verify(req.cookies["Dineat"], process.env.LOB, async (err, payload) => {
+    if (!err) {
+      // const entered = await pool.query('Insert into ')
+      //Quering and a few validation up for tomorrow btw today :)
     }
   });
 });
