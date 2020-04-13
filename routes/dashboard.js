@@ -42,9 +42,6 @@ dashboardRouter.post("/dates", (req, res, next) => {
 
       return res.json({
         dates: dates,
-        today: new Date(
-          new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" })
-        ),
       });
     }
   });

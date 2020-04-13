@@ -421,11 +421,9 @@ export default {
         const result = await this.startCapturing(this.recognize);
         this.speech = result;
         if (result.toLowerCase().includes("open" || "book")) {
-          if (result.toLowerCase().includes("open first" || "book first")) {
+          if (result.toLowerCase().includes("first")) {
             return this.bindClick(this.data[0]);
-          } else if (
-            result.toLowerCase().includes("open second" || "book second")
-          ) {
+          } else if (result.toLowerCase().includes("second")) {
             return this.bindClick(this.data[1]);
           }
         }
@@ -469,8 +467,7 @@ export default {
       });
       const dateTime = await data.json();
       this.dates = dateTime.dates;
-      this.today = new Date(dateTime.today);
-      console.log(this.today);
+      this.today = new Date(this.dates[0]);
     },
     setLimit([t1, t2]) {
       const temp = [];
@@ -505,9 +502,8 @@ export default {
       if (!this.date) {
         return;
       }
-      const currentDate = new Date();
-      if (this.date === currentDate.toISOString().split("T")[0]) {
-        if (this.limit.includes(hr) && hr > currentDate.getHours()) {
+      if (this.date === this.dates[0]) {
+        if (this.limit.includes(hr) && hr > this.today.getHours()) {
           return hr;
         }
       } else if (this.limit.includes(hr)) {
