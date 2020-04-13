@@ -1,10 +1,16 @@
 <template>
   <v-app>
-    <v-app-bar fixed color="#f5f5f5" elevate-on-scroll>
+    <v-app-bar fixed color="white" elevate-on-scroll>
+      <div class="mr-2">
+        <v-img src="" max-height="32" max-width="32"></v-img>
+      </div>
       <v-toolbar-title class="appTitle font-weight-medium primary--text"
         >Dineat</v-toolbar-title
       >
       <v-spacer></v-spacer>
+      <v-btn class="primary--text" depressed>
+        {{ this.$store.state.user.username }}
+      </v-btn>
       <v-toolbar-items>
         <v-btn text @click="logout" color="primary">
           <v-icon left size="24">mdi-logout</v-icon>Logout
@@ -13,11 +19,7 @@
     </v-app-bar>
 
     <v-container class="pa-10 mt-10 wrapper" fluid>
-      <v-row justify="center">
-        <p class="primary--text greeting">
-          Hi {{ this.$store.state.user.username }}
-        </p>
-      </v-row>
+      <v-row justify="center"> </v-row>
       <v-row justify="center">
         <p class="title font-weight-regular">
           Reserve a restaurant table with voice commands. Use the search feature
@@ -179,7 +181,7 @@
           <v-container class="pt-10 mt-10" fluid>
             <v-row justify="space-around">
               <v-col cols="12" xs="12" sm="10" md="5">
-                <v-card elevation="5" tile>
+                <v-card elevation="5">
                   <v-img :src="currentBooking.image" max-height="400" />
                 </v-card>
                 <v-card
@@ -192,7 +194,7 @@
                   <p class="center">
                     {{ currentBooking.cuisines }}
                   </p>
-                  <v-divider color="white"></v-divider>
+                  <v-divider color="white" class="mb-5"></v-divider>
                   <div class="center" v-if="bookingDialog">
                     Open Time:
                     {{ formatTimings(currentBooking.time) }}
@@ -212,7 +214,7 @@
                       label="Name"
                       v-model="this.$store.state.user.username"
                       class="title font-weight-regular"
-                      prepend-icon=""
+                      prepend-icon="mdi-checkbook"
                       :rules="[rules.isEmpty]"
                     ></v-text-field>
                     <v-select
@@ -241,9 +243,9 @@
                         ></v-text-field>
                       </template>
                       <v-date-picker
+                        :allowed-dates="permittedDates"
                         v-model="date"
                         no-title
-                        :allowed-dates="permittedDates"
                         @input="dateMenu = false"
                       ></v-date-picker>
                     </v-menu>
@@ -254,6 +256,7 @@
                       transition="scale-transition"
                       offset-y
                       min-width="290px"
+                      max-width="290px"
                     >
                       <template v-slot:activator="{ on }">
                         <v-text-field
@@ -266,18 +269,19 @@
                         ></v-text-field>
                       </template>
                       <v-time-picker
+                        v-if="timeMenu"
                         :allowed-hours="permittedHrs"
                         :allowed-minutes="[0, 30]"
                         scrollable
+                        full-width
                         v-model="time"
-                        @input="timeMenu = false"
+                        @click:minute="timeMenu = false"
                         color="primary lighten-1"
                         format="24hr"
-                        class="mt-5"
                       ></v-time-picker>
                     </v-menu>
                     <v-row justify="center" class="mt-10">
-                      <v-btn color="primary lighten-1" tile type="submit"
+                      <v-btn color="primary lighten-1" type="submit"
                         >Reserve</v-btn
                       >
                     </v-row>
@@ -326,6 +330,8 @@ export default {
     guests: "",
     time: "",
     date: "",
+    month: new Date().getMonth() + 1,
+    today: "",
     dates: [],
     limit: []
   }),
@@ -344,7 +350,6 @@ export default {
       recognize.maxAlternatives = 1;
       this.recognize = recognize;
     }
-
     const setTextToSpeech = () => {
       let voices = [];
       const synthesis = window.speechSynthesis;
@@ -363,17 +368,6 @@ export default {
       }
     };
     setTimeout(setTextToSpeech, 1000);
-    const currentDate = new Date();
-    const tDays = new Date(
-      currentDate.getFullYear,
-      currentDate.getMonth,
-      0
-    ).getDate();
-    console.log(tDays);
-    for (let i = currentDate; i <= currentDate + 7; i++) {
-      this.dates.push(i);
-    }
-    currentDate.forEach(date => {});
   },
   methods: {
     dictate(toSpeak) {
@@ -462,9 +456,21 @@ export default {
       this.data = this.$store.getters.fetchRestaurants;
     },
 
-    bindClick(hotel) {
+    async bindClick(hotel) {
       this.bookingDialog = true;
       this.currentBooking = hotel;
+      const data = await fetch("/bank/dates", {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json"
+        },
+        credentials: "same-origin"
+      });
+      const dateTime = await data.json();
+      this.dates = dateTime.dates;
+      this.today = new Date(dateTime.today);
+      console.log(this.today);
     },
     setLimit([t1, t2]) {
       const temp = [];
@@ -488,15 +494,23 @@ export default {
       }
     },
     permittedDates(date) {
-      if (
-        Number(date.split("-")[2]) < currentDate + 7 &&
-        Number(date.split("-")[2]) >= currentDate
-      ) {
+      if (![this.month, this.month + 1].includes(Number(date.split("-")[1]))) {
+        return;
+      }
+      if (this.dates.includes(date)) {
         return date;
       }
     },
     permittedHrs(hr) {
-      if (this.limit.includes(hr) && hr > new Date().getHours()) {
+      if (!this.date) {
+        return;
+      }
+      const currentDate = new Date();
+      if (this.date === currentDate.toISOString().split("T")[0]) {
+        if (this.limit.includes(hr) && hr > currentDate.getHours()) {
+          return hr;
+        }
+      } else if (this.limit.includes(hr)) {
         return hr;
       }
     },
@@ -521,7 +535,6 @@ export default {
 }
 .greeting {
   font-size: 24px;
-  letter-spacing: 1px;
 }
 .cardItems {
   display: flex;
@@ -530,7 +543,7 @@ export default {
   font-size: 18px;
 }
 .wrapper {
-  background-color: #f5f5f5;
+  background-color: #fff;
   height: 100%;
 }
 .buttonWrapper {
