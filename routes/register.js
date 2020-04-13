@@ -1,6 +1,6 @@
 require("dotenv").config();
 const express = require("express");
-const admitRouter = express.Router();
+const registerRouter = express.Router();
 const nodemailer = require("nodemailer");
 const { pool, bcrypt } = require("../auth");
 const jwt = require("jsonwebtoken");
@@ -19,7 +19,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-const resetKey = () => {
+const uniqueKey = () => {
   let subs = "";
   for (let i = 0; i < 4; i++) {
     subs += Math.random().toString(16).substr(2);
@@ -62,14 +62,14 @@ const signature = async (req, res) => {
     };
   }
 };
-admitRouter.post("/knock", async (req, res, next) => {
+registerRouter.post("/knock", async (req, res, next) => {
   const status = await signature(req, res);
   if (status.approved) {
     res.json({ valid: true });
   }
 });
 
-admitRouter.post("/enroll", async (req, res, next) => {
+registerRouter.post("/enroll", async (req, res, next) => {
   const status = await signature(req, res);
   if (status.approved) {
     try {
@@ -89,7 +89,7 @@ admitRouter.post("/enroll", async (req, res, next) => {
   }
 });
 
-admitRouter.post("/register", async (req, res) => {
+registerRouter.post("/register", async (req, res) => {
   try {
     const email = req.body.email;
     const rex = /^[a-zA-Z0-9](\.?[a-zA-Z0-9]){5,}@(gmail\.com|(iite\.)?indusuni\.ac\.in)$/;
@@ -106,7 +106,7 @@ admitRouter.post("/register", async (req, res) => {
       [user]
     );
     if (check.rowCount === 0) {
-      const setter = resetKey();
+      const setter = uniqueKey();
       const time = Math.floor(Date.now() / 1000);
       const entry = await pool.query(
         "insert into authorized(username, token, stamp, domain) values ($1, $2, $3, $4)",
@@ -122,12 +122,12 @@ admitRouter.post("/register", async (req, res) => {
   }
 });
 
-admitRouter.post("/renew", (req, res, next) => {
+registerRouter.post("/renew", (req, res, next) => {
   jwt.verify(req.cookies["Dineat"], process.env.LOB, async (err, payload) => {
     try {
       if (!err && payload.username === "feedbackloop08") {
         const email = req.body.username + "@" + req.body.domain;
-        const setter = resetKey();
+        const setter = uniqueKey();
         const time = Math.floor(Date.now() / 1000);
         const update = await pool.query(
           "Update authorized set token = $1, stamp = $2 where username = $3",
@@ -171,4 +171,7 @@ const mailer = (res, email, setter, host) => {
   return emailPromise;
 };
 
-module.exports = admitRouter;
+module.exports = {
+  registerRouter,
+  uniqueKey,
+};
