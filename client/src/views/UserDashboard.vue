@@ -8,14 +8,27 @@
         >Dineat</v-toolbar-title
       >
       <v-spacer></v-spacer>
-      <v-btn class="primary--text" depressed>
-        {{ name }}
-      </v-btn>
-      <v-toolbar-items>
-        <v-btn text @click="logout" color="primary">
-          <v-icon left size="24">mdi-logout</v-icon>Logout
-        </v-btn>
-      </v-toolbar-items>
+      <v-menu
+        offsetY
+        right
+        origin="center center"
+        transition="scroll-y-transition"
+      >
+        <template v-slot:activator="{ on }">
+          <v-btn color="#f5f6f9" class="primary--text" depressed v-on="on">
+            <v-icon left>mdi-account</v-icon>
+            {{ username }}
+          </v-btn>
+        </template>
+        <v-list>
+          <v-list-item @click="myBookings">
+            <v-icon left>mdi-timetable</v-icon>Bookings
+          </v-list-item>
+          <v-list-item @click="logout">
+            <v-icon left>mdi-logout</v-icon>Logout
+          </v-list-item>
+        </v-list>
+      </v-menu>
     </v-app-bar>
 
     <v-container class="pa-10 mt-10 wrapper" fluid>
@@ -56,7 +69,7 @@
         >
           <v-card tile>
             <v-card-title class="title font-weight-regular">
-              search for, places, cuisines ....
+              Speak for, places, cuisines ....
               <v-spacer></v-spacer>
               <v-progress-circular
                 :indeterminate="infinite"
@@ -176,7 +189,7 @@
             <v-btn icon @click="bookingDialog = false" color="white"
               ><v-icon>mdi-close</v-icon></v-btn
             >
-            <v-toolbar-title class="title">Guest Details</v-toolbar-title>
+            <v-toolbar-title class="headline">Guest Details</v-toolbar-title>
           </v-app-bar>
           <v-container class="pt-10 mt-10" fluid>
             <v-row justify="space-around">
@@ -209,7 +222,10 @@
               <v-col cols="12" xs="12" sm="10" md="5">
                 <p class="center headline font-weight-medium">Book Now</p>
                 <v-card class="pa-5" flat>
-                  <v-form ref="book" @submit.prevent="handleReservation">
+                  <v-form
+                    ref="book"
+                    @submit.prevent="handleReservation(currentBooking.id)"
+                  >
                     <v-text-field
                       label="Name"
                       v-model="name"
@@ -228,7 +244,7 @@
                       v-model="dateMenu"
                       :close-on-content-click="false"
                       :nudge-right="40"
-                      transition="scale-transition"
+                      transition="scroll-y-transition"
                       offset-y
                       min-width="290px"
                     >
@@ -239,6 +255,7 @@
                           prepend-icon="mdi-calendar"
                           readonly
                           v-on="on"
+                          @focus="fetchDates"
                           :rules="[rules.isEmpty]"
                         ></v-text-field>
                       </template>
@@ -253,7 +270,7 @@
                       v-model="timeMenu"
                       :close-on-content-click="false"
                       :nudge-right="40"
-                      transition="scale-transition"
+                      transition="scroll-y-transition"
                       offset-y
                       min-width="290px"
                     >
@@ -264,16 +281,17 @@
                           prepend-icon="mdi-clock-outline"
                           readonly
                           v-on="on"
+                          @focus="time = ''"
                           :rules="[rules.isEmpty]"
                         ></v-text-field>
                       </template>
                       <v-time-picker
                         v-if="timeMenu"
                         :allowed-hours="permittedHrs"
-                        :allowed-minutes="[0, 30]"
+                        :allowed-minutes="minutes"
                         scrollable
-                        full-width
                         v-model="time"
+                        @click:hour="minsHandler"
                         @click:minute="timeMenu = false"
                         color="primary lighten-1"
                         format="24hr"
@@ -322,20 +340,22 @@ export default {
     ],
     dateMenu: false,
     timeMenu: false,
-    rules: {
-      isEmpty: value => !!value || "Should not be empty"
-    },
-    guest: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+    name: "",
     guests: "",
     time: "",
     date: "",
     month: new Date().getMonth() + 1,
+    rules: {
+      isEmpty: value => !!value || "Should not be empty"
+    },
+    guest: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
     today: "",
     dates: [],
-    limit: []
+    hours: [],
+    minutes: []
   }),
   computed: {
-    name() {
+    username() {
       return this.$store.state.user.username;
     }
   },
@@ -402,20 +422,23 @@ export default {
           if (err.error === "no-speech") {
             error = "Please try again ...";
           } else if (err.error === "network") {
-            error = "Internet access is required for voice search to work";
+            error = "Network access is required for voice search to work";
           } else {
             error = "Microphone access is needed for voice search to work";
           }
+          this.dictate(error);
           denied(error);
         };
         recognize.start();
       });
       return promise;
     },
+
     stopCapturing() {
       this.recognize.stop();
       this.voiceDialog = false;
     },
+
     async voiceSearch() {
       try {
         if (this.voiceModule) {
@@ -440,9 +463,7 @@ export default {
         } else {
           this.dictate(this.failureCommands[Math.floor(Math.random() * 3)]);
         }
-      } catch (err) {
-        this.dictate(err);
-      }
+      } catch (err) {}
     },
 
     textSearch() {
@@ -458,9 +479,12 @@ export default {
       this.data = this.$store.getters.fetchRestaurants;
     },
 
-    async bindClick(hotel) {
+    bindClick(hotel) {
       this.bookingDialog = true;
       this.currentBooking = hotel;
+    },
+
+    async fetchDates() {
       const data = await fetch("/bank/dates", {
         method: "POST",
         headers: {
@@ -473,6 +497,7 @@ export default {
       this.dates = dateTime.dates;
       this.today = new Date(dateTime.today);
     },
+
     setLimit([t1, t2]) {
       const temp = [];
       for (let i = Number(t1); i < Number(t2); i++) {
@@ -483,14 +508,14 @@ export default {
     formatTimings(time) {
       if (time.includes(" ")) {
         const [day, eve] = time.split(" ");
-        this.limit = [
+        this.hours = [
           ...this.setLimit(day.split("-")),
           ...this.setLimit(eve.split("-"))
         ];
         return time.replace(" ", " & ");
       } else {
         const [a, b] = time.split("-");
-        this.limit = this.setLimit(time.split("-"));
+        this.hours = this.setLimit(time.split("-"));
         return time;
       }
     },
@@ -506,16 +531,32 @@ export default {
       if (!this.date) {
         return;
       }
-
       if (this.date === this.dates[0]) {
-        if (this.limit.includes(hr) && hr > this.today.getHours()) {
+        if (this.hours.includes(hr) && hr >= this.today.getHours()) {
           return hr;
         }
-      } else if (this.limit.includes(hr)) {
+      } else if (this.hours.includes(hr)) {
         return hr;
       }
     },
-    async handleReservation() {
+    minsHandler(hr) {
+      let todayMins = [];
+      const minutes = [0, 15, 30, 45];
+      const currentMinutes = this.today.getMinutes();
+      const currentHours = this.today.getHours();
+      todayMins = minutes.filter(min => min - currentMinutes > 15);
+
+      if (this.date === this.dates[0]) {
+        if (currentMinutes > 45 && hr === currentHours + 1) {
+          return (this.minutes = minutes.slice(1));
+        }
+        if (hr === this.today.getHours()) {
+          return (this.minutes = todayMins);
+        }
+      }
+      return (this.minutes = minutes);
+    },
+    async handleReservation(eateryId) {
       if (!this.$refs.book.validate()) {
         return;
       }
@@ -530,15 +571,16 @@ export default {
           name: this.name,
           guests: this.guests,
           date: this.date,
-          time: this.time
+          time: this.time,
+          resId: eateryId
         })
       });
       const saved = await ack.json();
       console.log(saved);
     },
+    myBookings() {},
     logout() {
-      console.log("On logout");
-      this.$router.go(-1);
+      this.$router.push("/login");
       document.cookie =
         "Dineat=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
       this.$store.commit("sessionEnded");
@@ -551,9 +593,6 @@ export default {
 .appTitle {
   font-size: 28px;
 }
-.greeting {
-  font-size: 24px;
-}
 .cardItems {
   display: flex;
   justify-content: space-between;
@@ -563,9 +602,6 @@ export default {
 .wrapper {
   background-color: #fff;
   height: 100%;
-}
-.buttonWrapper {
-  background-color: #efefef;
 }
 .dialogWrapper {
   background-color: #fff;

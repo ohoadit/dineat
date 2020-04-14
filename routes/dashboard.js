@@ -53,8 +53,10 @@ dashboardRouter.post("/dates", (req, res, next) => {
 dashboardRouter.post("/book", (req, res, next) => {
   jwt.verify(req.cookies["Dineat"], process.env.LOB, async (err, payload) => {
     if (!err) {
-      // const entered = await pool.query('Insert into ')
-      //Quering and a few validation up for tomorrow btw today :)
+      const entered = await pool.query(
+        "Insert into bookings values ($1, $2, $3, $4, $5, $6, $7)",
+        []
+      );
     }
   });
 });
