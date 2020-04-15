@@ -69,7 +69,7 @@
         >
           <v-card tile>
             <v-card-title class="title font-weight-regular">
-              Speak for, places, cuisines ....
+              {{ command }}
               <v-spacer></v-spacer>
               <v-progress-circular
                 :indeterminate="infinite"
@@ -189,7 +189,7 @@
             <v-btn icon @click="bookingDialog = false" color="white"
               ><v-icon>mdi-close</v-icon></v-btn
             >
-            <v-toolbar-title class="headline">Guest Details</v-toolbar-title>
+            <v-toolbar-title class="title">Guest Details</v-toolbar-title>
           </v-app-bar>
           <v-container class="pt-10 mt-10" fluid>
             <v-row justify="space-around">
@@ -250,6 +250,7 @@
                     >
                       <template v-slot:activator="{ on }">
                         <v-text-field
+                          ref="date"
                           v-model="date"
                           label="Choose Date"
                           prepend-icon="mdi-calendar"
@@ -276,6 +277,7 @@
                     >
                       <template v-slot:activator="{ on }">
                         <v-text-field
+                          ref="time"
                           v-model="time"
                           label="Choose Time"
                           prepend-icon="mdi-clock-outline"
@@ -306,6 +308,16 @@
                 </v-card>
               </v-col>
             </v-row>
+            <v-btn
+              fab
+              bottom
+              right
+              color="orange darken-1 white--text"
+              class="mr-5 mb-5"
+              fixed
+              @click="voiceBooking"
+              ><v-icon>mdi-microphone</v-icon></v-btn
+            >
           </v-container>
         </v-card>
       </v-dialog>
@@ -321,6 +333,7 @@ export default {
     recognize: null,
     voice: null,
     speech: "",
+    command: "",
     voiceDialog: false,
     voiceModule: false,
     alert: false,
@@ -331,12 +344,12 @@ export default {
     successCommands: [
       "Here are some results!",
       "This is what I got!",
-      "Search results are as follows"
+      "Search results are as follows",
     ],
     failureCommands: [
       "No match found!",
       "No such places or cuisines!",
-      "Sorry no matching result!"
+      "Sorry no matching result!",
     ],
     dateMenu: false,
     timeMenu: false,
@@ -346,18 +359,18 @@ export default {
     date: "",
     month: new Date().getMonth() + 1,
     rules: {
-      isEmpty: value => !!value || "Should not be empty"
+      isEmpty: (value) => !!value || "Should not be empty",
     },
     guest: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
     today: "",
     dates: [],
     hours: [],
-    minutes: []
+    minutes: [],
   }),
   computed: {
     username() {
       return this.$store.state.user.username;
-    }
+    },
   },
   mounted() {
     this.$store.dispatch("grabRestaurants");
@@ -383,7 +396,7 @@ export default {
       if (!voices.length) {
         synthesis.onvoiceschanged = () => {
           voices = synthesis.getVoices();
-          let googleVoice = voices.filter(voice =>
+          let googleVoice = voices.filter((voice) =>
             voice.name.includes("Google" && "Female")
           );
           this.voice = googleVoice.length ? googleVoice[0] : voices[1];
@@ -395,29 +408,32 @@ export default {
   },
   methods: {
     dictate(toSpeak) {
-      if (this.synthesis.speaking) {
-        return;
-      }
-      const speaker = new SpeechSynthesisUtterance(toSpeak);
-      speaker.voice = this.voice;
-      speaker.pitch = 1;
-      speaker.rate = 0.9;
-      this.synthesis.speak(speaker);
+      return new Promise((solved, denied) => {
+        if (this.synthesis.speaking) {
+          denied("Already Speaking");
+        }
+        const speaker = new SpeechSynthesisUtterance(toSpeak);
+        speaker.voice = this.voice;
+        speaker.pitch = 1;
+        speaker.rate = 0.9;
+        this.synthesis.speak(speaker);
+        speaker.onend = () => solved("Done assisting!");
+      });
     },
 
-    startCapturing(recognize) {
+    startCapturing(recognize, dialog) {
       const promise = new Promise((solved, denied) => {
-        recognize.onstart = () => (this.voiceDialog = true);
+        recognize.onstart = () => (this[dialog] = true);
 
         recognize.onspeechend = () => {
           recognize.stop();
-          this.voiceDialog = false;
+          this[dialog] = false;
         };
 
-        recognize.onresult = event => solved(event.results[0][0].transcript);
+        recognize.onresult = (event) => solved(event.results[0][0].transcript);
 
-        recognize.onerror = err => {
-          this.voiceDialog = false;
+        recognize.onerror = (err) => {
+          this[dialog] = false;
           let error = "";
           if (err.error === "no-speech") {
             error = "Please try again ...";
@@ -426,7 +442,6 @@ export default {
           } else {
             error = "Microphone access is needed for voice search to work";
           }
-          this.dictate(error);
           denied(error);
         };
         recognize.start();
@@ -439,13 +454,17 @@ export default {
       this.voiceDialog = false;
     },
 
+    stopSpeaking() {
+      this.synthesis.cancel();
+    },
     async voiceSearch() {
       try {
         if (this.voiceModule) {
           this.alert = true;
           return;
         }
-        const result = await this.startCapturing(this.recognize);
+        this.command = "Speak for, places, cuisines ....";
+        const result = await this.startCapturing(this.recognize, "voiceDialog");
         this.speech = result;
         if (result.toLowerCase().includes("open" || "book")) {
           if (result.toLowerCase().includes("first")) {
@@ -458,12 +477,22 @@ export default {
           this.speech.toLowerCase()
         );
         if (results.length) {
-          this.dictate(this.successCommands[Math.floor(Math.random() * 3)]);
+          await this.dictate(
+            this.successCommands[Math.floor(Math.random() * 3)]
+          );
           this.data = [...results];
         } else {
-          this.dictate(this.failureCommands[Math.floor(Math.random() * 3)]);
+          await this.dictate(
+            this.failureCommands[Math.floor(Math.random() * 3)]
+          );
         }
-      } catch (err) {}
+      } catch (err) {
+        try {
+          await this.dictate(err);
+        } catch (err) {
+          this.stopSpeaking();
+        }
+      }
     },
 
     textSearch() {
@@ -489,9 +518,9 @@ export default {
         method: "POST",
         headers: {
           Accept: "application/json",
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
         },
-        credentials: "same-origin"
+        credentials: "same-origin",
       });
       const dateTime = await data.json();
       this.dates = dateTime.dates;
@@ -510,7 +539,7 @@ export default {
         const [day, eve] = time.split(" ");
         this.hours = [
           ...this.setLimit(day.split("-")),
-          ...this.setLimit(eve.split("-"))
+          ...this.setLimit(eve.split("-")),
         ];
         return time.replace(" ", " & ");
       } else {
@@ -533,6 +562,13 @@ export default {
       }
       if (this.date === this.dates[0]) {
         if (this.hours.includes(hr) && hr >= this.today.getHours()) {
+          if (hr === this.today.getHours()) {
+            if (this.today.getMinutes() < 31) {
+              return hr;
+            } else {
+              return;
+            }
+          }
           return hr;
         }
       } else if (this.hours.includes(hr)) {
@@ -544,7 +580,7 @@ export default {
       const minutes = [0, 15, 30, 45];
       const currentMinutes = this.today.getMinutes();
       const currentHours = this.today.getHours();
-      todayMins = minutes.filter(min => min - currentMinutes > 15);
+      todayMins = minutes.filter((min) => min - currentMinutes > 15);
 
       if (this.date === this.dates[0]) {
         if (currentMinutes > 45 && hr === currentHours + 1) {
@@ -557,6 +593,7 @@ export default {
       return (this.minutes = minutes);
     },
     async handleReservation(eateryId) {
+      await this.fetchDates();
       if (!this.$refs.book.validate()) {
         return;
       }
@@ -564,19 +601,42 @@ export default {
         method: "POST",
         headers: {
           Accept: "application/json",
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
         },
         credentials: "same-origin",
         body: JSON.stringify({
           name: this.name,
           guests: this.guests,
-          date: this.date,
-          time: this.time,
-          resId: eateryId
-        })
+          schedule: this.date + "^" + this.time,
+          resId: eateryId,
+        }),
       });
       const saved = await ack.json();
       console.log(saved);
+    },
+    async voiceBooking() {
+      let question = "";
+      if (this.name === "") {
+        question =
+          "Hello, I will help you in filling this form! Tell your name or just say next to use the default username!";
+        try {
+          await this.dictate(question);
+          this.command = question;
+          const answer = await this.startCapturing(
+            this.recognize,
+            "voiceDialog"
+          );
+          if (answer.includes("next")) {
+            this.name = this.username;
+          } else {
+            this.name = answer;
+          }
+        } catch (err) {
+          this.stopSpeaking();
+        }
+      }
+      if (this.guests === "") {
+      }
     },
     myBookings() {},
     logout() {
@@ -584,8 +644,8 @@ export default {
       document.cookie =
         "Dineat=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
       this.$store.commit("sessionEnded");
-    }
-  }
+    },
+  },
 };
 </script>
 
