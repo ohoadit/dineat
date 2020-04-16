@@ -21,7 +21,7 @@
           </v-btn>
         </template>
         <v-list>
-          <v-list-item @click="myBookings">
+          <v-list-item>
             <v-icon left>mdi-timetable</v-icon>Bookings
           </v-list-item>
           <v-list-item @click="logout">
@@ -128,12 +128,17 @@
         </v-card>
       </v-dialog>
 
-      <v-row class="mt-10" justify="center">
+      <v-row
+        class="mt-10"
+        justify="center"
+        :class="this.$vuetify.breakpoint.mdAndUp ? 'mx-10' : ''"
+      >
         <v-col
           cols="12"
           xs="12"
           sm="6"
-          md="3"
+          md="4"
+          lg="3"
           v-for="(restaurant, index) in data"
           :key="index"
         >
@@ -181,11 +186,7 @@
         transition="dialog-bottom-transition"
       >
         <v-card tile class="dialogWrapper">
-          <v-app-bar
-            class="orange darken-1 white--text"
-            fixed
-            elevate-on-scroll
-          >
+          <v-app-bar class="orange darken-1 white--text" fixed>
             <v-btn icon @click="bookingDialog = false" color="white"
               ><v-icon>mdi-close</v-icon></v-btn
             >
@@ -227,6 +228,7 @@
                     @submit.prevent="handleReservation(currentBooking.id)"
                   >
                     <v-text-field
+                      ref="name"
                       label="Name"
                       v-model="name"
                       class="title font-weight-regular"
@@ -234,17 +236,18 @@
                       :rules="[rules.isEmpty]"
                     ></v-text-field>
                     <v-select
-                      label="Guests"
-                      :items="guest"
-                      v-model="guests"
+                      ref="dropdown"
+                      :items="guests"
+                      v-model="guest"
+                      label="Guest"
                       prepend-icon="mdi-account-multiple"
                       :rules="[rules.isEmpty]"
                     ></v-select>
                     <v-menu
                       v-model="dateMenu"
                       :close-on-content-click="false"
-                      :nudge-right="40"
-                      transition="scroll-y-transition"
+                      :nudge-right="20"
+                      transition="scale-transition"
                       offset-y
                       min-width="290px"
                     >
@@ -313,7 +316,7 @@
               bottom
               right
               color="orange darken-1 white--text"
-              class="mr-5 mb-5"
+              class="mr-1 mb-5"
               fixed
               @click="voiceBooking"
               ><v-icon>mdi-microphone</v-icon></v-btn
@@ -354,14 +357,14 @@ export default {
     dateMenu: false,
     timeMenu: false,
     name: "",
-    guests: "",
+    guest: "",
     time: "",
     date: "",
     month: new Date().getMonth() + 1,
     rules: {
       isEmpty: (value) => !!value || "Should not be empty",
     },
-    guest: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+    guests: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
     today: "",
     dates: [],
     hours: [],
@@ -407,15 +410,23 @@ export default {
     setTimeout(setTextToSpeech, 1000);
   },
   methods: {
+    notify(message) {
+      this.synthesis.cancel();
+      const speaker = new SpeechSynthesisUtterance(message);
+      speaker.voice = this.voice;
+      speaker.pitch = 1;
+      speaker.rate = 1;
+      this.synthesis.speak(speaker);
+    },
     dictate(toSpeak) {
-      return new Promise((solved, denied) => {
+      return new Promise((solved) => {
         if (this.synthesis.speaking) {
-          denied("Already Speaking");
+          this.stopSpeaking();
         }
         const speaker = new SpeechSynthesisUtterance(toSpeak);
         speaker.voice = this.voice;
         speaker.pitch = 1;
-        speaker.rate = 0.9;
+        speaker.rate = 1;
         this.synthesis.speak(speaker);
         speaker.onend = () => solved("Done assisting!");
       });
@@ -439,9 +450,10 @@ export default {
             error = "Please try again ...";
           } else if (err.error === "network") {
             error = "Network access is required for voice search to work";
-          } else {
+          } else if (err.error === "not-allowed") {
             error = "Microphone access is needed for voice search to work";
           }
+          this.notify(error);
           denied(error);
         };
         recognize.start();
@@ -607,7 +619,8 @@ export default {
         body: JSON.stringify({
           name: this.name,
           guests: this.guests,
-          schedule: this.date + "^" + this.time,
+          date: this.date,
+          time: this.time,
           resId: eateryId,
         }),
       });
@@ -616,29 +629,71 @@ export default {
     },
     async voiceBooking() {
       let question = "";
+      let answer = "";
       if (this.name === "") {
         question =
-          "Hello, I will help you in filling this form! Tell your name or just say next to use the default username!";
+          "Tell your name or just say next to use the default username!";
         try {
           await this.dictate(question);
+          this.$refs.name.focus();
           this.command = question;
-          const answer = await this.startCapturing(
-            this.recognize,
-            "voiceDialog"
-          );
+          answer = await this.startCapturing(this.recognize, "voiceDialog");
           if (answer.includes("next")) {
             this.name = this.username;
           } else {
             this.name = answer;
           }
         } catch (err) {
-          this.stopSpeaking();
+          return this.notify(err);
         }
       }
-      if (this.guests === "") {
+      if (this.guest === "") {
+        question = "What will be the total number of guests at the venue?";
+        try {
+          await this.dictate(question);
+          this.$refs.dropdown.activateMenu();
+          try {
+            answer = await this.startCapturing(this.recognize, "voiceDialog");
+            let num = Number(answer);
+            if (this.guests.includes(num)) {
+              this.guest = num;
+            } else {
+              this.notify("Please choose from the dropdown list only");
+            }
+            this.$refs.dropdown.blur();
+          } catch (err) {
+            this.$refs.dropdown.blur();
+          }
+        } catch (err) {}
+      }
+      if (this.date === "") {
+        question = "Please choose a date from the picker.";
+        await this.dictate(question);
+        this.command = question;
+        this.$refs.date.focus();
+        this.dateMenu = true;
+        answer = await this.startCapturing(this.recognize, "voiceDialog");
+        console.time("voi");
+        answer = answer.replace(/(st|nd|rd|th|of)/g, "");
+
+        let date = new Date(answer);
+        console.log(date);
+        if (date.toString() === "Invalid Date") {
+          return this.notify("Invalid Date");
+        } else {
+          date.setFullYear(this.today.getFullYear());
+          let iso = date.toISOString().split("T")[0];
+          console.log(iso);
+          if (!this.dates.includes(iso)) {
+            return this.notify("Date unavailable");
+          } else {
+            this.date = iso;
+          }
+          this.dateMenu = false;
+        }
+        console.timeEnd("voi");
       }
     },
-    myBookings() {},
     logout() {
       this.$router.push("/login");
       document.cookie =
@@ -657,7 +712,7 @@ export default {
   display: flex;
   justify-content: space-between;
   align-content: center;
-  font-size: 18px;
+  font-size: 16px;
 }
 .wrapper {
   background-color: #fff;

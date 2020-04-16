@@ -19,8 +19,7 @@ dashboardRouter.get("/", (req, res, next) => {
     }
   });
 });
-
-let dates = [];
+let dates = new Set();
 
 dashboardRouter.post("/dates", (req, res, next) => {
   jwt.verify(req.cookies["Dineat"], process.env.LOB, (err, payload) => {
@@ -39,11 +38,11 @@ dashboardRouter.post("/dates", (req, res, next) => {
           .split(",")[0]
           .split("/");
         unformatted.unshift(unformatted.pop());
-        dates.push(unformatted.join("-"));
+        dates.add(unformatted.join("-"));
         date.setDate(date.getDate() + 1);
       }
       return res.json({
-        dates: dates,
+        dates: [...dates],
         today: today,
       });
     }
@@ -53,9 +52,20 @@ dashboardRouter.post("/dates", (req, res, next) => {
 dashboardRouter.post("/book", (req, res, next) => {
   jwt.verify(req.cookies["Dineat"], process.env.LOB, async (err, payload) => {
     if (!err) {
+      const bkgId = uniqueKey();
+      const body = req.body;
+      let schedule = "";
+      return;
       const entered = await pool.query(
         "Insert into bookings values ($1, $2, $3, $4, $5, $6, $7)",
-        []
+        [
+          payload.username,
+          body.name,
+          schedule,
+          bkgId,
+          body.resId,
+          req.body.guests,
+        ]
       );
     }
   });
