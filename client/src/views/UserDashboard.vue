@@ -61,12 +61,7 @@
         <v-btn color="primary" @click="loadRestaurants">Explore</v-btn>
       </v-row>
       <v-row>
-        <v-dialog
-          v-model="voiceDialog"
-          persistent
-          max-width="500px"
-          height="auto"
-        >
+        <v-dialog v-model="voiceDialog" persistent max-width="500px">
           <v-card tile>
             <v-card-title class="title font-weight-regular">
               {{ command }}
@@ -185,8 +180,8 @@
         hide-overlay
         transition="dialog-bottom-transition"
       >
-        <v-card tile class="dialogWrapper">
-          <v-app-bar class="orange darken-1 white--text" fixed>
+        <v-card tile class="">
+          <v-app-bar class="orange darken-1 white--text" flat fixed>
             <v-btn icon @click="bookingDialog = false" color="white"
               ><v-icon>mdi-close</v-icon></v-btn
             >
@@ -302,8 +297,14 @@
                         format="24hr"
                       ></v-time-picker>
                     </v-menu>
-                    <v-row justify="center" class="mt-10">
-                      <v-btn color="primary lighten-1" type="submit"
+                    <v-row justify="space-around" class="mt-10">
+                      <v-btn
+                        color="primary lighten-1"
+                        width="90"
+                        @click="resetForm"
+                        >Reset</v-btn
+                      >
+                      <v-btn color="primary lighten-1" width="90" type="submit"
                         >Reserve</v-btn
                       >
                     </v-row>
@@ -569,6 +570,7 @@ export default {
       }
     },
     permittedHrs(hr) {
+      console.log("Called permitted hrs");
       if (!this.date) {
         return;
       }
@@ -605,7 +607,6 @@ export default {
       return (this.minutes = minutes);
     },
     async handleReservation(eateryId) {
-      await this.fetchDates();
       if (!this.$refs.book.validate()) {
         return;
       }
@@ -627,72 +628,105 @@ export default {
       const saved = await ack.json();
       console.log(saved);
     },
+    async QnA(que, fields) {
+      this.$refs[fields.open[0]][fields.open[1]]();
+      if (fields.menu) {
+        this[fields.menu] = true;
+      }
+      await this.dictate(que);
+      this.command = que;
+      let answer = await this.startCapturing(this.recognize, "voiceDialog");
+
+      if (fields.close.length) {
+        this.$refs[fields.close[0]][fields.close[1]]();
+      }
+      if (fields.menu) {
+        this[fields.menu] = false;
+      }
+      return answer;
+    },
     async voiceBooking() {
-      let question = "";
       let answer = "";
       if (this.name === "") {
-        question =
-          "Tell your name or just say next to use the default username!";
         try {
-          await this.dictate(question);
-          this.$refs.name.focus();
-          this.command = question;
-          answer = await this.startCapturing(this.recognize, "voiceDialog");
-          if (answer.includes("next")) {
-            this.name = this.username;
-          } else {
-            this.name = answer;
-          }
+          answer = await this.QnA(
+            "Tell your name or just say next to use the default username!",
+            { open: ["name", "focus"], close: [], menu: false }
+          );
+          this.name = answer.includes("next") ? this.username : answer;
         } catch (err) {
           return this.notify(err);
         }
       }
       if (this.guest === "") {
-        question = "What will be the total number of guests at the venue?";
         try {
-          await this.dictate(question);
-          this.$refs.dropdown.activateMenu();
-          try {
-            answer = await this.startCapturing(this.recognize, "voiceDialog");
-            let num = Number(answer);
-            if (this.guests.includes(num)) {
-              this.guest = num;
-            } else {
-              this.notify("Please choose from the dropdown list only");
+          answer = await this.QnA(
+            "What will be the total number of guests at the venue?",
+            {
+              open: ["dropdown", "activateMenu"],
+              close: ["dropdown", "blur"],
+              menu: false,
             }
-            this.$refs.dropdown.blur();
-          } catch (err) {
-            this.$refs.dropdown.blur();
+          );
+          let num = Number(answer);
+          if (this.guests.includes(num)) {
+            this.guest = num;
+          } else {
+            return this.notify("Please choose from the dropdown list only");
           }
-        } catch (err) {}
+        } catch (err) {
+          return this.notify("Please try again");
+        }
       }
       if (this.date === "") {
-        question = "Please choose a date from the picker.";
-        await this.dictate(question);
-        this.command = question;
-        this.$refs.date.focus();
-        this.dateMenu = true;
-        answer = await this.startCapturing(this.recognize, "voiceDialog");
-        console.time("voi");
-        answer = answer.replace(/(st|nd|rd|th|of)/g, "");
-
-        let date = new Date(answer);
-        console.log(date);
-        if (date.toString() === "Invalid Date") {
-          return this.notify("Invalid Date");
-        } else {
-          date.setFullYear(this.today.getFullYear());
-          let iso = date.toISOString().split("T")[0];
-          console.log(iso);
-          if (!this.dates.includes(iso)) {
-            return this.notify("Date unavailable");
+        try {
+          answer = await this.QnA("Please choose a date from the picker.", {
+            open: ["date", "focus"],
+            close: ["date", "blur"],
+            menu: "dateMenu",
+          });
+          answer = answer.replace(/(st|nd|rd|th|of)/g, "");
+          let date = new Date(answer);
+          if (date.toString() !== "Invalid Date") {
+            date.setFullYear(this.today.getFullYear());
+            let unf = date
+              .toLocaleString("en-US", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+              })
+              .split(",")[0]
+              .replace(/\//g, "-")
+              .split("-");
+            unf.unshift(unf.pop());
+            let iso = unf.join("-");
+            if (this.dates.includes(iso)) {
+              this.date = iso;
+            } else {
+              return this.notify("Date unavailable");
+            }
           } else {
-            this.date = iso;
+            return this.notify("Invalid Date");
           }
-          this.dateMenu = false;
+        } catch (err) {
+          return;
         }
-        console.timeEnd("voi");
       }
+      if (this.time === "") {
+        this.$refs.time.focus();
+        this.timeMenu = true;
+        try {
+          await this.dictate("At what time ?");
+
+          answer = await this.startCapturing(this.recognize, "voiceDialog");
+          let date = new Date(answer);
+        } catch (err) {
+          return;
+        }
+      }
+    },
+    resetForm() {
+      this.$refs.book.reset();
     },
     logout() {
       this.$router.push("/login");
@@ -714,13 +748,16 @@ export default {
   align-content: center;
   font-size: 16px;
 }
+.dialog {
+  overflow: hidden;
+}
 .wrapper {
   background-color: #fff;
   height: 100%;
 }
 .dialogWrapper {
   background-color: #fff;
-  overflow: hidden;
+  overflow-y: hidden;
 }
 .center {
   text-align: center;
