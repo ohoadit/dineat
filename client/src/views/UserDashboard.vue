@@ -47,7 +47,6 @@
               v-model="speech"
               :value="speech"
               hide-details
-              autofocus
               solo
               clearable
               prepend-inner-icon="mdi-magnify"
@@ -185,7 +184,7 @@
             <v-btn icon @click="bookingDialog = false" color="white"
               ><v-icon>mdi-close</v-icon></v-btn
             >
-            <v-toolbar-title class="title">Guest Details</v-toolbar-title>
+            <v-toolbar-title class="title">Booking Details</v-toolbar-title>
           </v-app-bar>
           <v-container class="pt-10 mt-10" fluid>
             <v-row justify="space-around">
@@ -254,7 +253,7 @@
                           prepend-icon="mdi-calendar"
                           readonly
                           v-on="on"
-                          @focus="fetchDates"
+                          @focus="fetchDateTime"
                           :rules="[rules.isEmpty]"
                         ></v-text-field>
                       </template>
@@ -269,7 +268,7 @@
                       v-model="timeMenu"
                       :close-on-content-click="false"
                       :nudge-right="40"
-                      transition="scroll-y-transition"
+                      transition="scale-transition"
                       offset-y
                       min-width="290px"
                     >
@@ -277,11 +276,18 @@
                         <v-text-field
                           ref="time"
                           v-model="time"
+                          :value="time"
                           label="Choose Time"
                           prepend-icon="mdi-clock-outline"
                           readonly
                           v-on="on"
-                          @focus="time = ''"
+                          @focus="
+                            () => {
+                              fetchDateTime();
+                              time = '';
+                            }
+                          "
+                          @blur.native.stop="timeMenu = false"
                           :rules="[rules.isEmpty]"
                         ></v-text-field>
                       </template>
@@ -370,6 +376,7 @@ export default {
     dates: [],
     hours: [],
     minutes: [],
+    compHrs: new Set(),
   }),
   computed: {
     username() {
@@ -490,22 +497,12 @@ export default {
           this.speech.toLowerCase()
         );
         if (results.length) {
-          await this.dictate(
-            this.successCommands[Math.floor(Math.random() * 3)]
-          );
+          this.notify(this.successCommands[Math.floor(Math.random() * 3)]);
           this.data = [...results];
         } else {
-          await this.dictate(
-            this.failureCommands[Math.floor(Math.random() * 3)]
-          );
+          this.notify(this.failureCommands[Math.floor(Math.random() * 3)]);
         }
-      } catch (err) {
-        try {
-          await this.dictate(err);
-        } catch (err) {
-          this.stopSpeaking();
-        }
-      }
+      } catch (err) {}
     },
 
     textSearch() {
@@ -526,7 +523,7 @@ export default {
       this.currentBooking = hotel;
     },
 
-    async fetchDates() {
+    async fetchDateTime() {
       const data = await fetch("/bank/dates", {
         method: "POST",
         headers: {
@@ -570,7 +567,6 @@ export default {
       }
     },
     permittedHrs(hr) {
-      console.log("Called permitted hrs");
       if (!this.date) {
         return;
       }
@@ -578,23 +574,25 @@ export default {
         if (this.hours.includes(hr) && hr >= this.today.getHours()) {
           if (hr === this.today.getHours()) {
             if (this.today.getMinutes() < 31) {
+              this.compHrs.add(hr);
               return hr;
             } else {
               return;
             }
           }
+          this.compHrs.add(hr);
           return hr;
         }
       } else if (this.hours.includes(hr)) {
+        this.compHrs.add(hr);
         return hr;
       }
     },
     minsHandler(hr) {
-      let todayMins = [];
       const minutes = [0, 15, 30, 45];
       const currentMinutes = this.today.getMinutes();
       const currentHours = this.today.getHours();
-      todayMins = minutes.filter((min) => min - currentMinutes > 15);
+      const todayMins = minutes.filter((min) => min - currentMinutes > 15);
 
       if (this.date === this.dates[0]) {
         if (currentMinutes > 45 && hr === currentHours + 1) {
@@ -647,7 +645,7 @@ export default {
     },
     async voiceBooking() {
       let answer = "";
-      if (this.name === "") {
+      if (!this.name) {
         try {
           answer = await this.QnA(
             "Tell your name or just say next to use the default username!",
@@ -658,7 +656,7 @@ export default {
           return this.notify(err);
         }
       }
-      if (this.guest === "") {
+      if (!this.guest) {
         try {
           answer = await this.QnA(
             "What will be the total number of guests at the venue?",
@@ -678,7 +676,7 @@ export default {
           return this.notify("Please try again");
         }
       }
-      if (this.date === "") {
+      if (!this.date) {
         try {
           answer = await this.QnA("Please choose a date from the picker.", {
             open: ["date", "focus"],
@@ -712,14 +710,31 @@ export default {
           return;
         }
       }
-      if (this.time === "") {
-        this.$refs.time.focus();
-        this.timeMenu = true;
+      if (!this.time) {
         try {
-          await this.dictate("At what time ?");
+          answer = await this.QnA("At what time ?", {
+            open: ["time", "focus"],
+            close: ["time", "blur"],
+            menu: "timeMenu",
+          });
 
-          answer = await this.startCapturing(this.recognize, "voiceDialog");
-          let date = new Date(answer);
+          if (!answer.includes(":" || "a.m." || "p.m.")) {
+            return this.notify("Invalid time");
+          }
+          const [actual, meridiem] = answer.split(" ");
+          const [hr, min] = actual.split(":");
+          const spknHr =
+            meridiem === "a.m." || hr === "12" ? Number(hr) : 12 + Number(hr);
+          const spknMin = Number(min);
+          this.minsHandler(spknHr);
+          if (
+            [...this.compHrs].includes(spknHr) &&
+            this.minutes.includes(spknMin)
+          ) {
+            this.time = [spknHr, min].join(":");
+          } else {
+            return this.notify("Time unavailable");
+          }
         } catch (err) {
           return;
         }
