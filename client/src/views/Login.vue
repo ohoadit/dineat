@@ -113,7 +113,7 @@
           :active="showProgress"
         ></v-progress-linear>
         <v-card-text class="pt-10">
-          <v-form ref="signup" @submit.prevent="onSignup">
+          <v-form ref="signup" @submit.prevent>
             <v-text-field
               autofocus
               v-model="email"
@@ -165,9 +165,9 @@ export default {
     message: "",
     color: "",
     rules: {
-      isEmpty: v => !!v || "Should not be empty",
-      checkLength: v => v.length >= 8 || "Minimum 8 characters"
-    }
+      isEmpty: (v) => !!v || "Should not be empty",
+      checkLength: (v) => v.length >= 8 || "Minimum 8 characters",
+    },
   }),
 
   methods: {
@@ -180,13 +180,13 @@ export default {
         method: "POST",
         headers: {
           Accept: "application/json",
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
         },
         credentials: "same-origin",
         body: JSON.stringify({
           username: this.username,
-          password: this.password
-        })
+          password: this.password,
+        }),
       });
       let res = await response.json();
       if (res.matched) {
@@ -195,7 +195,7 @@ export default {
           : this.$router.push("/dashboard");
         this.$store.commit("setUser", {
           username: this.username,
-          cookie: document.cookie
+          cookie: document.cookie,
         });
       } else {
         this[res.field] = res.msg;
@@ -212,11 +212,11 @@ export default {
         method: "POST",
         headers: {
           Accept: "application/json",
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          email: this.email
-        })
+          email: this.email,
+        }),
       });
       let receipt = await response.json();
       this.showProgress = false;
@@ -225,16 +225,18 @@ export default {
         this.color = "teal accent-4";
         this.snackbar = true;
         this.signupDialog = false;
+        this.email = "";
       } else if (receipt.field) {
         return (this[receipt.field] = receipt.msg);
       } else {
         this.color = "red lighten-1";
         this.snackbar = true;
         this.signupDialog = false;
+        this.email = "";
       }
       this.message = receipt.msg;
-    }
-  }
+    },
+  },
 };
 </script>
 
