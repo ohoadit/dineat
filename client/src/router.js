@@ -1,11 +1,9 @@
 import Vue from "vue";
 import VueRouter from "vue-router";
-const Login = () => import(/* webpackChunkName: 'login' */ "./views/Login.vue");
-const UserDashboard = () =>
-  import(/* webpackChunkName: 'userDash' */ "./views/UserDashboard.vue");
-const Reset = () => import(/* webpackChunkName: 'reset' */ "./views/Reset.vue");
-const Admin = () =>
-  import(/* webpackChunkName: 'rootDash' */ "./views/Admin.vue");
+const Login = import("./views/Login.vue");
+const UserDashboard = import("./views/UserDashboard.vue");
+const Reset = import("./views/Reset.vue");
+const Admin = import("./views/Admin.vue");
 import store from "@/store";
 
 Vue.use(VueRouter);
