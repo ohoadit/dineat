@@ -215,8 +215,8 @@
               </v-col>
 
               <v-col cols="12" xs="12" sm="10" md="5">
-                <p class="center headline font-weight-medium">Book Now</p>
                 <v-card class="pa-5" flat>
+                  <p class="center headline font-weight-medium">Book Now</p>
                   <v-form
                     ref="book"
                     @submit.prevent="handleReservation(currentBooking.id)"
@@ -314,6 +314,11 @@
                         >Reserve</v-btn
                       >
                     </v-row>
+                    <v-row justify="center">
+                      <v-card class="mt-10" elevation="3" tile>
+                        <v-img v-if="url" :src="url"></v-img>
+                      </v-card>
+                    </v-row>
                   </v-form>
                 </v-card>
               </v-col>
@@ -377,6 +382,7 @@ export default {
     hours: [],
     minutes: [],
     compHrs: new Set(),
+    url: "",
   }),
   computed: {
     username() {
@@ -617,14 +623,14 @@ export default {
         credentials: "same-origin",
         body: JSON.stringify({
           name: this.name,
-          guests: this.guests,
+          guests: this.guest,
           date: this.date,
           time: this.time,
           resId: eateryId,
         }),
       });
       const saved = await ack.json();
-      console.log(saved);
+      this.url = saved.ticket;
     },
     async QnA(que, fields) {
       this.$refs[fields.open[0]][fields.open[1]]();
@@ -744,7 +750,7 @@ export default {
       this.$refs.book.reset();
     },
     logout() {
-      this.$router.push("/login");
+      this.$router.go("/login");
       document.cookie =
         "Dineat=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
       this.$store.commit("sessionEnded");
