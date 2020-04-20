@@ -70,17 +70,14 @@ dashboardRouter.post("/book", (req, res, next) => {
       const selTime = body.time;
       try {
         if (await validSchedule(selDate, selTime.split(":"), body.resId)) {
-          const entered = await pool.query(
-            "Insert into bookings values ($1, $2, $3, $4, $5, $6)",
-            [
-              payload.username,
-              body.name,
-              selDate + "@" + selTime,
-              bkgId,
-              body.resId,
-              body.guests,
-            ]
-          );
+          const entered = await pool.query("Insert into bookings values ($1, $2, $3, $4, $5, $6)", [
+            payload.username,
+            body.name,
+            selDate + "@" + selTime,
+            bkgId,
+            body.resId,
+            body.guests,
+          ]);
           const url = await qrCode.toDataURL(bkgId, options);
           if (entered.rowCount) {
             return res.json({
@@ -91,6 +88,58 @@ dashboardRouter.post("/book", (req, res, next) => {
           }
         } else {
           return res.json({ msg: "Invalid Date/Time", saved: false });
+        }
+      } catch (err) {
+        console.log(err);
+        return res.status(500).json({ msg: "Internal Server Error :/" });
+      }
+    } else {
+      return res.status(401).json({ msg: "Invalid Request" });
+    }
+  });
+});
+
+dashboardRouter.post("/passbook", (req, res, next) => {
+  jwt.verify(req.cookies["Dineat"], process.env.LOB, async (err, payload) => {
+    if (!err) {
+      try {
+        const bookings = await pool.query(
+          `SELECT bookings.name, bookings.schedule, bookings.guests, bookings.id, restaurant.name, restaurant.location 
+              FROM bookings INNER JOIN restaurant ON restaurant.id = bookings.resid WHERE bookings.username = $1`,
+          [payload.username]
+        );
+        let date, time;
+        bookings.rows.forEach((booking) => {
+          [date, time] = booking.schedule.split("@");
+          let now = new Date().set();
+        });
+        return bookings.rows
+          ? res.json({ valid: true, bookings: bookings.rows })
+          : res.json({ msg: "No previous bookings" });
+      } catch (err) {
+        console.log(err);
+        return res.status(500).json({ msg: "Internal Server Error :/" });
+      }
+    } else {
+      return res.status(401).json({ msg: "Invalid Request" });
+    }
+  });
+});
+
+dashboardRouter.post("/getQR", (req, res, next) => {
+  jwt.verify(req.cookies["Dineat"], process.env.LOB, async (err, payload) => {
+    if (!err) {
+      try {
+        const data = await pool.query("Select uid from bookings where username = $1 and id = $2", [
+          payload.username,
+          req.body.id,
+        ]);
+        const token = data.rows[0].uid;
+        if (token) {
+          const url = await qrCode.toDataURL(token, options);
+          return res.json({ blob: url });
+        } else {
+          return res.json({ msg: "No such entry" });
         }
       } catch (err) {
         console.log(err);
