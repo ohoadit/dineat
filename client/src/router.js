@@ -50,6 +50,7 @@ const routes = [
       }
     },
   },
+
   {
     path: "/admin",
     name: "Admin",
@@ -89,7 +90,6 @@ const routes = [
           res.valid ? next() : next("/");
         })
         .catch((err) => {
-          console.log(err);
           next("/");
         });
     },
