@@ -1,342 +1,361 @@
 <template>
   <v-app>
-    <v-app-bar fixed color="white" elevate-on-scroll>
+    <v-app-bar fixed color="white">
       <div class="mr-2">
         <v-img src="" max-height="32" max-width="32"></v-img>
       </div>
-      <v-toolbar-title class="appTitle font-weight-medium primary--text"
-        >Dineat</v-toolbar-title
-      >
+      <v-toolbar-title class="appTitle font-weight-medium primary--text">Dineat</v-toolbar-title>
       <v-spacer></v-spacer>
-      <v-menu
-        offsetY
-        right
-        origin="center center"
-        transition="scroll-y-transition"
-      >
+      <v-menu offsetY right origin="center center" transition="scroll-y-transition">
         <template v-slot:activator="{ on }">
-          <v-btn color="#f5f6f9" class="primary--text" depressed v-on="on">
+          <v-btn color="primary" depressed v-on="on">
             <v-icon left>mdi-account</v-icon>
             {{ username }}
           </v-btn>
         </template>
         <v-list>
-          <v-list-item>
-            <v-icon left>mdi-timetable</v-icon>Bookings
-          </v-list-item>
-          <v-list-item @click="logout">
-            <v-icon left>mdi-logout</v-icon>Logout
-          </v-list-item>
+          <v-list-item @click="logout"> <v-icon left>mdi-logout</v-icon>Logout </v-list-item>
         </v-list>
       </v-menu>
+      <template v-slot:extension>
+        <v-tabs v-model="activeTab" fixed-tabs>
+          <v-tabs-slider height="5"></v-tabs-slider>
+          <v-tab v-for="(tab, i) in tabs" :key="i" :href="tab.link">
+            <v-icon left>{{ tab.icon }}</v-icon>
+            {{ tab.name }}
+          </v-tab>
+        </v-tabs>
+      </template>
     </v-app-bar>
-
-    <v-container class="pa-10 mt-10 wrapper" fluid>
-      <v-row justify="center"> </v-row>
-      <v-row justify="center">
-        <p class="title font-weight-regular">
-          Reserve a restaurant table with voice commands. Use the search feature
-          to explore.
-        </p>
-      </v-row>
-      <v-row justify="center" class="mb-5">
-        <v-col cols="12" xs="12" sm="10" md="8">
-          <v-form ref="form" @submit.prevent="textSearch">
-            <v-text-field
-              label="search"
-              v-model="speech"
-              :value="speech"
-              hide-details
-              solo
-              clearable
-              prepend-inner-icon="mdi-magnify"
-              append-icon="mdi-microphone"
-              @click:append="voiceSearch"
-            ></v-text-field>
-          </v-form>
-        </v-col>
-      </v-row>
-      <v-row justify="center" class="mt-7" align="center">
-        <v-btn color="primary" @click="loadRestaurants">Explore</v-btn>
-      </v-row>
-      <v-row>
-        <v-dialog v-model="voiceDialog" persistent max-width="500px">
-          <v-card tile>
-            <v-card-title class="title font-weight-regular">
-              {{ command }}
-              <v-spacer></v-spacer>
-              <v-progress-circular
-                :indeterminate="infinite"
-                color="primary lighten-1"
-              ></v-progress-circular>
-            </v-card-title>
-            <v-card-actions>
-              <v-spacer></v-spacer>
-              <v-btn color="red lighten-1 white--text" @click="stopCapturing"
-                >Stop</v-btn
-              >
-              <v-spacer></v-spacer>
-            </v-card-actions>
-          </v-card>
-        </v-dialog>
-      </v-row>
-      <v-dialog
-        class="mt-10 subtitle font-weight-regular"
-        v-model="alert"
-        max-width="500px"
-      >
-        <v-card tile color="orange lighten-1 white--text">
-          <v-card-title>
-            Alert
-          </v-card-title>
-          <v-card-text class="white--text title font-weight-regular">
-            <p>
-              Google chrome is recommended for voice search. However, Dineat's
-              voice feature works fine on firefox too.
-            </p>
-            <p>
-              In case you are using Firefox, you need to activate certain flags.
-            </p>
-            <p>For that</p>
-            <ol>
-              <li>
-                Open a new tab in firefox and type about:config in the URL box
-                and click Accept the risk and continue if on desktop.
-              </li>
-              <li>
-                Now in the search preference name type
-                media.webspeech.recognition.enable and set it to true it by
-                clicking toggle.
-              </li>
-              <li>
-                Same procedure for media.webspeech.recognition.force_enable and
-                media.webspeech.synth.enabled.
-              </li>
-            </ol></v-card-text
-          >
-          <v-card-actions>
-            <v-spacer></v-spacer>
-            <v-btn @click="alert = false">Dismiss</v-btn>
-            <v-spacer></v-spacer>
-          </v-card-actions>
-        </v-card>
-      </v-dialog>
-
-      <v-row
-        class="mt-10"
-        justify="center"
-        :class="this.$vuetify.breakpoint.mdAndUp ? 'mx-10' : ''"
-      >
-        <v-col
-          cols="12"
-          xs="12"
-          sm="6"
-          md="4"
-          lg="3"
-          v-for="(restaurant, index) in data"
-          :key="index"
-        >
-          <v-hover v-slot:default="{ hover }">
-            <v-card @click="bindClick(restaurant)" :elevation="hover ? 10 : 2">
-              <v-img
-                max-height="300px"
-                :src="restaurant.image"
-                class="blue-grey lighten-5"
-                aspect-ratio="1"
-              >
-                <template v-slot:placeholder>
-                  <v-row
-                    class="fill-height blue-grey lighten-5"
-                    align="center"
-                    justify="center"
-                    ><v-progress-circular
-                      indeterminate
-                      color="primary lighten-1"
-                    ></v-progress-circular
-                  ></v-row>
-                </template>
-              </v-img>
+    <v-tabs-items v-model="activeTab">
+      <v-tab-item id="explore">
+        <v-container class="wrapper1" fluid>
+          <p class="title font-weight-regular" align="center">
+            Reserve a restaurant table with voice commands. Use the search feature to explore.
+          </p>
+          <v-row justify="center" class="mb-5">
+            <v-col cols="12" xs="12" sm="10" md="8">
+              <v-form ref="form" @submit.prevent="textSearch">
+                <v-text-field
+                  label="search"
+                  v-model="speech"
+                  :value="speech"
+                  hide-details
+                  solo
+                  clearable
+                  prepend-inner-icon="mdi-magnify"
+                  append-icon="mdi-microphone"
+                  @click:append="voiceSearch"
+                ></v-text-field>
+              </v-form>
+            </v-col>
+          </v-row>
+          <v-row justify="center" class="mt-7" align="center">
+            <v-btn color="primary" @click="loadRestaurants">Explore</v-btn>
+          </v-row>
+          <v-row>
+            <v-dialog v-model="voiceDialog" persistent max-width="500px">
+              <v-card tile>
+                <v-card-title class="title font-weight-regular">
+                  {{ command }}
+                  <v-spacer></v-spacer>
+                  <v-progress-circular
+                    :indeterminate="infinite"
+                    color="primary lighten-1"
+                  ></v-progress-circular>
+                </v-card-title>
+                <v-card-actions>
+                  <v-spacer></v-spacer>
+                  <v-btn color="red lighten-1 white--text" @click="stopCapturing">Stop</v-btn>
+                  <v-spacer></v-spacer>
+                </v-card-actions>
+              </v-card>
+            </v-dialog>
+          </v-row>
+          <v-dialog class="mt-10 subtitle font-weight-regular" v-model="alert" max-width="500px">
+            <v-card tile color="orange lighten-1 white--text">
               <v-card-title>
-                {{ restaurant.name }}
+                Alert
               </v-card-title>
-              <div class="cardItems pa-5">
-                <div>
-                  <v-icon>mdi-map-marker</v-icon>
-                  {{ restaurant.location }}
-                </div>
-                <div>
-                  <v-icon left>mdi-food-fork-drink</v-icon>
-                  {{ restaurant.speciality }}
-                </div>
-              </div>
+              <v-card-text class="white--text title font-weight-regular">
+                <p>
+                  Google chrome is recommended for voice search. However, Dineat's voice feature
+                  works fine on firefox too.
+                </p>
+                <p>
+                  In case you are using Firefox, you need to activate certain flags.
+                </p>
+                <p>For that</p>
+                <ol>
+                  <li>
+                    Open a new tab in firefox and type about:config in the URL box and click Accept
+                    the risk and continue if on desktop.
+                  </li>
+                  <li>
+                    Now in the search preference name type media.webspeech.recognition.enable and
+                    set it to true it by clicking toggle.
+                  </li>
+                  <li>
+                    Same procedure for media.webspeech.recognition.force_enable and
+                    media.webspeech.synth.enabled.
+                  </li>
+                </ol></v-card-text
+              >
+              <v-card-actions>
+                <v-spacer></v-spacer>
+                <v-btn @click="alert = false">Dismiss</v-btn>
+                <v-spacer></v-spacer>
+              </v-card-actions>
             </v-card>
-          </v-hover>
-        </v-col>
-      </v-row>
-      <v-dialog
-        v-model="bookingDialog"
-        fullscreen
-        hide-overlay
-        transition="dialog-bottom-transition"
-      >
-        <v-card tile class="">
-          <v-app-bar class="orange darken-1 white--text" flat fixed>
-            <v-btn icon @click="bookingDialog = false" color="white"
-              ><v-icon>mdi-close</v-icon></v-btn
-            >
-            <v-toolbar-title class="title">Booking Details</v-toolbar-title>
-          </v-app-bar>
-          <v-container class="pt-10 mt-10" fluid>
-            <v-row justify="space-around">
-              <v-col cols="12" xs="12" sm="10" md="5">
-                <v-card elevation="5">
-                  <v-img :src="currentBooking.image" max-height="400" />
-                </v-card>
-                <v-card
-                  class="pa-2 mt-5 primary lighten-1 white--text"
-                  elevation="3"
-                >
-                  <p class="center headline font-weight-medium">
-                    {{ currentBooking.name }}
-                  </p>
-                  <p class="center">
-                    {{ currentBooking.cuisines }}
-                  </p>
-                  <v-divider color="white" class="mb-5"></v-divider>
-                  <div class="center" v-if="bookingDialog">
-                    Open Time:
-                    {{ formatTimings(currentBooking.time) }}
-                  </div>
-                  <p class="center mt-2">
-                    Location:
-                    {{ currentBooking.location }}
-                  </p>
-                </v-card>
-              </v-col>
+          </v-dialog>
 
-              <v-col cols="12" xs="12" sm="10" md="5">
-                <v-card class="pa-5" flat>
-                  <p class="center headline font-weight-medium">Book Now</p>
-                  <v-form
-                    ref="book"
-                    @submit.prevent="handleReservation(currentBooking.id)"
-                  >
-                    <v-text-field
-                      ref="name"
-                      label="Name"
-                      v-model="name"
-                      class="title font-weight-regular"
-                      prepend-icon="mdi-checkbook"
-                      :rules="[rules.isEmpty]"
-                    ></v-text-field>
-                    <v-select
-                      ref="dropdown"
-                      :items="guests"
-                      v-model="guest"
-                      label="Guest"
-                      prepend-icon="mdi-account-multiple"
-                      :rules="[rules.isEmpty]"
-                    ></v-select>
-                    <v-menu
-                      v-model="dateMenu"
-                      :close-on-content-click="false"
-                      :nudge-right="20"
-                      transition="scale-transition"
-                      offset-y
-                      min-width="290px"
-                    >
-                      <template v-slot:activator="{ on }">
-                        <v-text-field
-                          ref="date"
-                          v-model="date"
-                          label="Choose Date"
-                          prepend-icon="mdi-calendar"
-                          readonly
-                          v-on="on"
-                          @focus="fetchDateTime"
-                          :rules="[rules.isEmpty]"
-                        ></v-text-field>
-                      </template>
-                      <v-date-picker
-                        :allowed-dates="permittedDates"
-                        v-model="date"
-                        no-title
-                        @input="dateMenu = false"
-                      ></v-date-picker>
-                    </v-menu>
-                    <v-menu
-                      v-model="timeMenu"
-                      :close-on-content-click="false"
-                      :nudge-right="40"
-                      transition="scale-transition"
-                      offset-y
-                      min-width="290px"
-                    >
-                      <template v-slot:activator="{ on }">
-                        <v-text-field
-                          ref="time"
-                          v-model="time"
-                          :value="time"
-                          label="Choose Time"
-                          prepend-icon="mdi-clock-outline"
-                          readonly
-                          v-on="on"
-                          @focus="
-                            () => {
-                              fetchDateTime();
-                              time = '';
-                            }
-                          "
-                          @blur.native.stop="timeMenu = false"
-                          :rules="[rules.isEmpty]"
-                        ></v-text-field>
-                      </template>
-                      <v-time-picker
-                        v-if="timeMenu"
-                        :allowed-hours="permittedHrs"
-                        :allowed-minutes="minutes"
-                        scrollable
-                        v-model="time"
-                        @click:hour="minsHandler"
-                        @click:minute="timeMenu = false"
-                        color="primary lighten-1"
-                        format="24hr"
-                      ></v-time-picker>
-                    </v-menu>
-                    <v-row justify="space-around" class="mt-10">
-                      <v-btn
-                        color="primary lighten-1"
-                        width="90"
-                        @click="resetForm"
-                        >Reset</v-btn
-                      >
-                      <v-btn color="primary lighten-1" width="90" type="submit"
-                        >Reserve</v-btn
-                      >
-                    </v-row>
-                    <v-row justify="center">
-                      <v-card class="mt-10" elevation="3" tile>
-                        <v-img v-if="url" :src="url"></v-img>
-                      </v-card>
-                    </v-row>
-                  </v-form>
-                </v-card>
-              </v-col>
-            </v-row>
-            <v-btn
-              fab
-              bottom
-              right
-              color="orange darken-1 white--text"
-              class="mr-1 mb-5"
-              fixed
-              @click="voiceBooking"
-              ><v-icon>mdi-microphone</v-icon></v-btn
+          <v-row
+            class="mt-10"
+            justify="center"
+            :class="this.$vuetify.breakpoint.mdAndUp ? 'mx-10' : ''"
+          >
+            <v-col
+              cols="12"
+              xs="12"
+              sm="6"
+              md="4"
+              lg="3"
+              v-for="(restaurant, index) in data"
+              :key="index"
             >
-          </v-container>
-        </v-card>
-      </v-dialog>
-    </v-container>
+              <v-hover v-slot:default="{ hover }">
+                <v-card @click="bindClick(restaurant)" :elevation="hover ? 10 : 2">
+                  <v-img
+                    max-height="300px"
+                    :src="restaurant.image"
+                    class="blue-grey lighten-5"
+                    aspect-ratio="1"
+                  >
+                    <template v-slot:placeholder>
+                      <v-row class="fill-height blue-grey lighten-5" align="center" justify="center"
+                        ><v-progress-circular
+                          indeterminate
+                          color="primary lighten-1"
+                        ></v-progress-circular
+                      ></v-row>
+                    </template>
+                  </v-img>
+                  <v-card-title>
+                    {{ restaurant.name }}
+                  </v-card-title>
+                  <div class="cardItems pa-5">
+                    <div>
+                      <v-icon>mdi-map-marker</v-icon>
+                      {{ restaurant.location }}
+                    </div>
+                    <div>
+                      <v-icon left>mdi-food-fork-drink</v-icon>
+                      {{ restaurant.speciality }}
+                    </div>
+                  </div>
+                </v-card>
+              </v-hover>
+            </v-col>
+          </v-row>
+          <v-dialog
+            v-model="bookingDialog"
+            fullscreen
+            hide-overlay
+            transition="dialog-bottom-transition"
+          >
+            <v-card tile class="">
+              <v-app-bar class="orange darken-1 white--text" flat fixed>
+                <v-btn icon @click="bookingDialog = false" color="white"
+                  ><v-icon>mdi-close</v-icon></v-btn
+                >
+                <v-toolbar-title class="title">Booking Details</v-toolbar-title>
+              </v-app-bar>
+              <v-container class="pt-10 mt-10" fluid>
+                <v-row justify="space-around">
+                  <v-col cols="12" xs="12" sm="10" md="5">
+                    <v-card elevation="5">
+                      <v-img :src="currentBooking.image" max-height="400" />
+                    </v-card>
+                    <v-card class="pa-2 mt-5 primary lighten-1 white--text" elevation="3">
+                      <p class="center headline font-weight-medium">
+                        {{ currentBooking.name }}
+                      </p>
+                      <p class="center">
+                        {{ currentBooking.cuisines }}
+                      </p>
+                      <v-divider color="white" class="mb-5"></v-divider>
+                      <div class="center" v-if="bookingDialog">
+                        Open Time:
+                        {{ formatTimings(currentBooking.time) }}
+                      </div>
+                      <p class="center mt-2">
+                        Location:
+                        {{ currentBooking.location }}
+                      </p>
+                    </v-card>
+                  </v-col>
+
+                  <v-col cols="12" xs="12" sm="10" md="5">
+                    <v-card class="pa-5" flat>
+                      <p class="center headline font-weight-medium">Book Now</p>
+                      <v-form ref="book" @submit.prevent="handleReservation(currentBooking.id)">
+                        <v-text-field
+                          ref="name"
+                          label="Name"
+                          v-model="name"
+                          class="title font-weight-regular"
+                          prepend-icon="mdi-checkbook"
+                          :rules="[rules.isEmpty]"
+                        ></v-text-field>
+                        <v-select
+                          ref="dropdown"
+                          :items="guests"
+                          v-model="guest"
+                          label="Guest"
+                          prepend-icon="mdi-account-multiple"
+                          :rules="[rules.isEmpty]"
+                        ></v-select>
+                        <v-menu
+                          v-model="dateMenu"
+                          :close-on-content-click="false"
+                          :nudge-right="20"
+                          transition="scale-transition"
+                          offset-y
+                          min-width="290px"
+                        >
+                          <template v-slot:activator="{ on }">
+                            <v-text-field
+                              ref="date"
+                              v-model="date"
+                              label="Choose Date"
+                              prepend-icon="mdi-calendar"
+                              readonly
+                              v-on="on"
+                              @focus="fetchDateTime"
+                              :rules="[rules.isEmpty]"
+                            ></v-text-field>
+                          </template>
+                          <v-date-picker
+                            :allowed-dates="permittedDates"
+                            v-model="date"
+                            no-title
+                            @input="dateMenu = false"
+                          ></v-date-picker>
+                        </v-menu>
+                        <v-menu
+                          v-model="timeMenu"
+                          :close-on-content-click="false"
+                          :nudge-right="40"
+                          transition="scale-transition"
+                          offset-y
+                          min-width="290px"
+                        >
+                          <template v-slot:activator="{ on }">
+                            <v-text-field
+                              ref="time"
+                              v-model="time"
+                              :value="time"
+                              label="Choose Time"
+                              prepend-icon="mdi-clock-outline"
+                              readonly
+                              v-on="on"
+                              @focus="
+                                () => {
+                                  fetchDateTime();
+                                  time = '';
+                                }
+                              "
+                              @blur.native.stop="timeMenu = false"
+                              :rules="[rules.isEmpty]"
+                            ></v-text-field>
+                          </template>
+                          <v-time-picker
+                            v-if="timeMenu"
+                            :allowed-hours="permittedHrs"
+                            :allowed-minutes="minutes"
+                            scrollable
+                            v-model="time"
+                            @click:hour="minsHandler"
+                            @click:minute="timeMenu = false"
+                            color="primary lighten-1"
+                            format="24hr"
+                          ></v-time-picker>
+                        </v-menu>
+                        <v-row justify="space-around" class="mt-10">
+                          <v-btn color="primary lighten-1" width="90" @click="resetForm"
+                            >Reset</v-btn
+                          >
+                          <v-btn color="primary lighten-1" width="90" type="submit">Reserve</v-btn>
+                        </v-row>
+                        <v-row justify="center">
+                          <v-card class="mt-10" elevation="3" tile>
+                            <v-img v-if="url" :src="url"></v-img>
+                          </v-card>
+                        </v-row>
+                      </v-form>
+                    </v-card>
+                  </v-col>
+                </v-row>
+                <v-btn
+                  fab
+                  bottom
+                  right
+                  color="orange darken-1 white--text"
+                  class="mr-1 mb-5"
+                  fixed
+                  @click="voiceBooking"
+                  ><v-icon>mdi-microphone</v-icon></v-btn
+                >
+              </v-container>
+            </v-card>
+          </v-dialog>
+        </v-container>
+      </v-tab-item>
+      <v-tab-item id="bookings">
+        <v-container class="wrapper2">
+          <v-row>
+            <v-col cols="12">
+              <v-progress-linear
+                top
+                indeterminate
+                color="primary"
+                :active="progress"
+              ></v-progress-linear>
+              <v-card class="pa-10" v-if="msg && !progress">
+                <p align="center" class="title">{{ msg }}</p>
+              </v-card>
+              <v-card v-for="(bkng, i) in bookings" :key="i" class="mt-5 pa-2" tile>
+                <v-row justify="space-around" align="center">
+                  <v-col cols="12" xs="12">
+                    <p align="center" class="headline">{{ bkng.name }}</p>
+                    <v-card-subtitle>
+                      {{ bkng.location }}
+                    </v-card-subtitle>
+
+                    {{ bkng.schedule }}
+                    {{ bkng.guests }}
+                  </v-col>
+                  <v-btn @click="showQR = true" color="primary" text>
+                    <v-icon left>mdi-eye</v-icon>
+                    Ticket
+                  </v-btn>
+                  <v-btn color="orange" text> <v-icon left>mdi-sync</v-icon>Regenerate</v-btn>
+                </v-row>
+              </v-card>
+            </v-col>
+          </v-row>
+          <v-dialog v-model="showQR" max-width="400">
+            <v-card class="pa-5">
+              <v-card-title>Restaurant Name</v-card-title>
+
+              <v-card elevation="5"
+                ><v-img :src="qr" elevation="5" max-width="256" max-height="256"></v-img>
+              </v-card>
+            </v-card>
+          </v-dialog>
+        </v-container>
+      </v-tab-item>
+    </v-tabs-items>
   </v-app>
 </template>
 
@@ -356,6 +375,24 @@ export default {
     currentBooking: {},
     infinite: true,
     data: [],
+    activeTab: null,
+    bookings: [],
+    progress: true,
+    showQR: false,
+    qr: "",
+    msg: "",
+    tabs: [
+      {
+        link: "#explore",
+        name: "Find",
+        icon: "mdi-silverware-fork-knife",
+      },
+      {
+        link: "#bookings",
+        name: "My Bookings",
+        icon: "mdi-timetable",
+      },
+    ],
     successCommands: [
       "Here are some results!",
       "This is what I got!",
@@ -389,10 +426,16 @@ export default {
       return this.$store.state.user.username;
     },
   },
+  watch: {
+    activeTab(tab) {
+      if (tab === "bookings") {
+        this.fetchBookings();
+      }
+    },
+  },
   mounted() {
     this.$store.dispatch("grabRestaurants");
-    const recognition =
-      window.webkitSpeechRecognition || window.SpeechRecognition;
+    const recognition = window.webkitSpeechRecognition || window.SpeechRecognition;
     if (!recognition) {
       this.voiceModule = true;
       return;
@@ -413,15 +456,13 @@ export default {
       if (!voices.length) {
         synthesis.onvoiceschanged = () => {
           voices = synthesis.getVoices();
-          let googleVoice = voices.filter((voice) =>
-            voice.name.includes("Google" && "Female")
-          );
+          let googleVoice = voices.filter((voice) => voice.name.includes("Google" && "Female"));
           this.voice = googleVoice.length ? googleVoice[0] : voices[1];
           this.synthesis = synthesis;
         };
       }
     };
-    setTimeout(setTextToSpeech, 1000);
+    setTimeout(setTextToSpeech, 100);
   },
   methods: {
     notify(message) {
@@ -499,9 +540,7 @@ export default {
             return this.bindClick(this.data[1]);
           }
         }
-        let results = this.$store.getters.searchRestaurant(
-          this.speech.toLowerCase()
-        );
+        let results = this.$store.getters.searchRestaurant(this.speech.toLowerCase());
         if (results.length) {
           this.notify(this.successCommands[Math.floor(Math.random() * 3)]);
           this.data = [...results];
@@ -515,9 +554,7 @@ export default {
       if (this.speech === "") {
         return;
       }
-      this.data = this.$store.getters.searchRestaurant(
-        this.speech.toLowerCase()
-      );
+      this.data = this.$store.getters.searchRestaurant(this.speech.toLowerCase());
     },
 
     loadRestaurants() {
@@ -553,10 +590,7 @@ export default {
     formatTimings(time) {
       if (time.includes(" ")) {
         const [day, eve] = time.split(" ");
-        this.hours = [
-          ...this.setLimit(day.split("-")),
-          ...this.setLimit(eve.split("-")),
-        ];
+        this.hours = [...this.setLimit(day.split("-")), ...this.setLimit(eve.split("-"))];
         return time.replace(" ", " & ");
       } else {
         const [a, b] = time.split("-");
@@ -653,10 +687,11 @@ export default {
       let answer = "";
       if (!this.name) {
         try {
-          answer = await this.QnA(
-            "Tell your name or just say next to use the default username!",
-            { open: ["name", "focus"], close: [], menu: false }
-          );
+          answer = await this.QnA("Tell your name or just say next to use the default username!", {
+            open: ["name", "focus"],
+            close: [],
+            menu: false,
+          });
           this.name = answer.includes("next") ? this.username : answer;
         } catch (err) {
           return this.notify(err);
@@ -664,14 +699,11 @@ export default {
       }
       if (!this.guest) {
         try {
-          answer = await this.QnA(
-            "What will be the total number of guests at the venue?",
-            {
-              open: ["dropdown", "activateMenu"],
-              close: ["dropdown", "blur"],
-              menu: false,
-            }
-          );
+          answer = await this.QnA("What will be the total number of guests at the venue?", {
+            open: ["dropdown", "activateMenu"],
+            close: ["dropdown", "blur"],
+            menu: false,
+          });
           let num = Number(answer);
           if (this.guests.includes(num)) {
             this.guest = num;
@@ -729,14 +761,10 @@ export default {
           }
           const [actual, meridiem] = answer.split(" ");
           const [hr, min] = actual.split(":");
-          const spknHr =
-            meridiem === "a.m." || hr === "12" ? Number(hr) : 12 + Number(hr);
+          const spknHr = meridiem === "a.m." || hr === "12" ? Number(hr) : 12 + Number(hr);
           const spknMin = Number(min);
           this.minsHandler(spknHr);
-          if (
-            [...this.compHrs].includes(spknHr) &&
-            this.minutes.includes(spknMin)
-          ) {
+          if ([...this.compHrs].includes(spknHr) && this.minutes.includes(spknMin)) {
             this.time = [spknHr, min].join(":");
           } else {
             return this.notify("Time unavailable");
@@ -749,10 +777,29 @@ export default {
     resetForm() {
       this.$refs.book.reset();
     },
+    async fetchBookings() {
+      this.msg = "";
+      try {
+        const res = await fetch("/bank/passbook", {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          credentials: "same-origin",
+        });
+        const data = await res.json();
+        if (data.valid) {
+          this.bookings = data.bookings;
+        } else {
+          this.msg = data.msg;
+        }
+        this.progress = false;
+      } catch (err) {}
+    },
     logout() {
       this.$router.go("/login");
-      document.cookie =
-        "Dineat=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      document.cookie = "Dineat=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
       this.$store.commit("sessionEnded");
     },
   },
@@ -772,9 +819,11 @@ export default {
 .dialog {
   overflow: hidden;
 }
-.wrapper {
-  background-color: #fff;
-  height: 100%;
+.wrapper1 {
+  margin-top: 150px;
+}
+.wrapper2 {
+  margin-top: 120px;
 }
 .dialogWrapper {
   background-color: #fff;
