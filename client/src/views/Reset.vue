@@ -12,7 +12,7 @@
                 </v-card-title>
               </v-row>
               <v-card-text class="px-7">
-                <v-form ref="form" @submit.prevent="onSubmit">
+                <v-form ref="form" @submit.prevent>
                   <v-text-field
                     autofocus
                     v-model="password"
@@ -42,6 +42,7 @@
                         tile
                         elevation="3"
                         width="100px"
+                        @click="onSubmit"
                         :disabled="disabled"
                         >Submit</v-btn
                       >
@@ -72,9 +73,9 @@ export default {
     timeout: 6000,
     disabled: false,
     rules: {
-      isEmpty: v => !!v || "Should not be empty",
-      checkLen: v => v.length >= 8 || "Minimum 8 characters"
-    }
+      isEmpty: (v) => !!v || "Should not be empty",
+      checkLen: (v) => v.length >= 8 || "Minimum 8 characters",
+    },
   }),
   methods: {
     match() {
@@ -90,12 +91,12 @@ export default {
           method: "POST",
           headers: {
             Accept: "application/json",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             key: this.$route.params.id,
-            password: this.password
-          })
+            password: this.password,
+          }),
         });
         const reply = await res.json();
         this.message = reply.msg;
@@ -112,7 +113,7 @@ export default {
       } catch (err) {
         console.log(err);
       }
-    }
-  }
+    },
+  },
 };
 </script>
