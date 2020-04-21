@@ -4,11 +4,11 @@
       <div class="mr-2">
         <v-img src="" max-height="32" max-width="32"></v-img>
       </div>
-      <v-toolbar-title class="appTitle font-weight-medium primary--text">Dineat</v-toolbar-title>
+      <v-toolbar-title class="appTitle font-weight-medium">Dineat</v-toolbar-title>
       <v-spacer></v-spacer>
       <v-menu offsetY right origin="center center" transition="scroll-y-transition">
         <template v-slot:activator="{ on }">
-          <v-btn color="primary" depressed v-on="on">
+          <v-btn v-on="on">
             <v-icon left>mdi-account</v-icon>
             {{ username }}
           </v-btn>
@@ -160,10 +160,11 @@
           <v-dialog
             v-model="bookingDialog"
             fullscreen
+            persistent
             hide-overlay
             transition="dialog-bottom-transition"
           >
-            <v-card tile class="">
+            <v-card tile>
               <v-app-bar class="orange darken-1 white--text" flat fixed>
                 <v-btn icon @click="bookingDialog = false" color="white"
                   ><v-icon>mdi-close</v-icon></v-btn
@@ -313,49 +314,58 @@
       </v-tab-item>
       <v-tab-item id="bookings">
         <v-container class="wrapper2">
-          <v-row>
-            <v-col cols="12">
+          <v-row justify="center" align="center">
+            <v-col cols="12" xs="12" sm="10" md="9" lg="8">
               <v-progress-linear
-                top
                 indeterminate
                 color="primary"
                 :active="progress"
+                class="mt-10"
+                v-if="progress"
               ></v-progress-linear>
-              <v-card class="pa-10" v-if="msg && !progress">
-                <p align="center" class="title">{{ msg }}</p>
+              <v-card class="pa-10 ma-10 white--text" v-if="msg && !progress" :color="msgColor">
+                <p align="center" class="title font-weight-regular">{{ msg }}</p>
               </v-card>
-              <v-card v-for="(bkng, i) in bookings" :key="i" class="mt-5 pa-2" tile>
-                <v-row justify="space-around" align="center">
-                  <v-col cols="12" xs="12">
-                    <p align="center" class="headline">{{ bkng.name }}</p>
-                    <v-card-subtitle>
-                      {{ bkng.location }}
-                    </v-card-subtitle>
+              <v-card v-for="(bkng, i) in bookings" :key="i" class="mt-10 pa-2" elevation="5">
+                <v-card-title class="headline"
+                  >{{ bkng.name }}
+                  <span
+                    ><v-icon right>mdi-circle-medium</v-icon
+                    ><span class="subtitle-1">{{ bkng.location }}</span></span
+                  ></v-card-title
+                >
+                <v-card-text>
+                  <p class="title">{{ bkng.schedule }}</p>
+                  <p class="title">Guests: {{ bkng.guests }}</p>
+                </v-card-text>
 
-                    {{ bkng.schedule }}
-                    {{ bkng.guests }}
-                  </v-col>
-                  <v-btn @click="showQR = true" color="primary" text>
+                <v-card-actions>
+                  <v-spacer></v-spacer>
+                  <v-btn @click="fetchQRCode(bkng.id, bkng.name)" color="primary" text>
                     <v-icon left>mdi-eye</v-icon>
                     Ticket
                   </v-btn>
                   <v-btn color="orange" text> <v-icon left>mdi-sync</v-icon>Regenerate</v-btn>
-                </v-row>
+                </v-card-actions>
               </v-card>
             </v-col>
           </v-row>
-          <v-dialog v-model="showQR" max-width="400">
-            <v-card class="pa-5">
-              <v-card-title>Restaurant Name</v-card-title>
-
-              <v-card elevation="5"
-                ><v-img :src="qr" elevation="5" max-width="256" max-height="256"></v-img>
-              </v-card>
-            </v-card>
-          </v-dialog>
         </v-container>
       </v-tab-item>
     </v-tabs-items>
+    <v-dialog v-model="showQR" max-width="400">
+      <v-card height="400" tile class="pa-10">
+        <v-row justify="center" align="center">
+          <v-card elevation="5" tile><v-img :src="qr" elevation="5"></v-img> </v-card>
+        </v-row>
+        <p class="headline mt-5 ml-10">
+          {{ textContent }}
+        </p>
+      </v-card>
+    </v-dialog>
+    <v-snackbar v-model="snackbar" :color="color" :timeout="timeout">
+      {{ snackmsg }} <v-btn text @click="snackbar = false">close</v-btn></v-snackbar
+    >
   </v-app>
 </template>
 
@@ -378,9 +388,15 @@ export default {
     activeTab: null,
     bookings: [],
     progress: true,
+    textContent: "",
     showQR: false,
     qr: "",
     msg: "",
+    msgColor: "",
+    snackbar: false,
+    color: "",
+    snackmsg: "",
+    timeout: 7000,
     tabs: [
       {
         link: "#explore",
@@ -644,28 +660,6 @@ export default {
       }
       return (this.minutes = minutes);
     },
-    async handleReservation(eateryId) {
-      if (!this.$refs.book.validate()) {
-        return;
-      }
-      const ack = await fetch("/bank/book", {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        credentials: "same-origin",
-        body: JSON.stringify({
-          name: this.name,
-          guests: this.guest,
-          date: this.date,
-          time: this.time,
-          resId: eateryId,
-        }),
-      });
-      const saved = await ack.json();
-      this.url = saved.ticket;
-    },
     async QnA(que, fields) {
       this.$refs[fields.open[0]][fields.open[1]]();
       if (fields.menu) {
@@ -774,6 +768,40 @@ export default {
         }
       }
     },
+    async handleReservation(eateryId) {
+      if (!this.$refs.book.validate()) {
+        return;
+      }
+      const ack = await fetch("/bank/book", {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        credentials: "same-origin",
+        body: JSON.stringify({
+          name: this.name,
+          guests: this.guest,
+          date: this.date,
+          time: this.time,
+          resId: eateryId,
+        }),
+      });
+      const saved = await ack.json();
+      if (!saved.saved) {
+        this.color = "red lighten-1";
+        this.snackmsg = saved.msg;
+      } else {
+        this.resetForm();
+        this.showQR = true;
+        this.textContent = "";
+        this.color = "teal accent-4";
+        this.bookingDialog = false;
+        this.snackmsg = saved.msg;
+        this.qr = saved.ticket;
+      }
+      this.snackbar = true;
+    },
     resetForm() {
       this.$refs.book.reset();
     },
@@ -793,12 +821,35 @@ export default {
           this.bookings = data.bookings;
         } else {
           this.msg = data.msg;
+          this.msgColor = "red lighten-1";
         }
         this.progress = false;
       } catch (err) {}
     },
+    async fetchQRCode(id, name) {
+      const res = await fetch("/bank/getQR", {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id: id,
+        }),
+      });
+      const ticket = await res.json();
+      if (ticket.valid) {
+        this.qr = ticket.blob;
+        this.showQR = true;
+        this.textContent = name;
+      } else {
+        this.color = "red lighten-1";
+        this.snackmsg = ticket.msg;
+        this.snackbar = true;
+      }
+    },
     logout() {
-      this.$router.go("/login");
+      this.$router.push("/login");
       document.cookie = "Dineat=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
       this.$store.commit("sessionEnded");
     },
@@ -823,7 +874,7 @@ export default {
   margin-top: 150px;
 }
 .wrapper2 {
-  margin-top: 120px;
+  margin-top: 100px;
 }
 .dialogWrapper {
   background-color: #fff;
