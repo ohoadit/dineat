@@ -8,7 +8,7 @@
       <v-spacer></v-spacer>
       <v-menu offsetY right origin="center center" transition="scroll-y-transition">
         <template v-slot:activator="{ on }">
-          <v-btn v-on="on">
+          <v-btn depressed v-on="on">
             <v-icon left>mdi-account</v-icon>
             {{ username }}
           </v-btn>
@@ -345,7 +345,9 @@
                     <v-icon left>mdi-eye</v-icon>
                     Ticket
                   </v-btn>
-                  <v-btn color="orange" text> <v-icon left>mdi-sync</v-icon>Regenerate</v-btn>
+                  <v-btn color="orange" text @click="genNewTicket(bkng.id)">
+                    <v-icon left>mdi-sync</v-icon>Regenerate</v-btn
+                  >
                 </v-card-actions>
               </v-card>
             </v-col>
@@ -354,13 +356,19 @@
       </v-tab-item>
     </v-tabs-items>
     <v-dialog v-model="showQR" max-width="400">
-      <v-card height="400" tile class="pa-10">
-        <v-row justify="center" align="center">
-          <v-card elevation="5" tile><v-img :src="qr" elevation="5"></v-img> </v-card>
-        </v-row>
-        <p class="headline mt-5 ml-10">
-          {{ textContent }}
-        </p>
+      <v-card height="400" tile>
+        <v-container fluid fill-height>
+          <v-row justify="center">
+            <v-card elevation="5" tile class="justify-center align-center"
+              ><v-img :src="qr" elevation="5"></v-img>
+            </v-card>
+          </v-row>
+          <v-row class="mt-5" justify="center">
+            <p class="headline" v-if="textContent">
+              {{ textContent }}
+            </p>
+          </v-row>
+        </v-container>
       </v-card>
     </v-dialog>
     <v-snackbar v-model="snackbar" :color="color" :timeout="timeout">
@@ -481,6 +489,16 @@ export default {
     setTimeout(setTextToSpeech, 100);
   },
   methods: {
+    showSnackbar(type, msg) {
+      this.snackmsg = msg;
+      if (type === "success") {
+        this.color = "teal accent-4";
+      } else {
+        this.color = "red lighten-1";
+      }
+      this.snackbar = true;
+    },
+
     notify(message) {
       this.synthesis.cancel();
       const speaker = new SpeechSynthesisUtterance(message);
@@ -789,18 +807,15 @@ export default {
       });
       const saved = await ack.json();
       if (!saved.saved) {
-        this.color = "red lighten-1";
-        this.snackmsg = saved.msg;
+        this.showSnackbar("err", saved.msg);
       } else {
         this.resetForm();
         this.showQR = true;
         this.textContent = "";
-        this.color = "teal accent-4";
         this.bookingDialog = false;
-        this.snackmsg = saved.msg;
+        this.showSnackbar("success", saved.msg);
         this.qr = saved.ticket;
       }
-      this.snackbar = true;
     },
     resetForm() {
       this.$refs.book.reset();
@@ -843,13 +858,29 @@ export default {
         this.showQR = true;
         this.textContent = name;
       } else {
-        this.color = "red lighten-1";
-        this.snackmsg = ticket.msg;
-        this.snackbar = true;
+        this.showSnackbar("err", ticket.msg);
       }
     },
+    genNewTicket(id) {
+      fetch("/bank/reissue", {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        credentials: "same-origin",
+        body: JSON.stringify({
+          id: id,
+        }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          data.issued ? this.showSnackbar("success", data.msg) : this.showSnackbar("err", data.msg);
+        })
+        .catch((err) => {});
+    },
     logout() {
-      this.$router.push("/login");
+      this.$router.replace("/login");
       document.cookie = "Dineat=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
       this.$store.commit("sessionEnded");
     },

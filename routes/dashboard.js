@@ -144,7 +144,7 @@ dashboardRouter.post("/book", (req, res, next) => {
             return res.json({
               saved: true,
               ticket: url,
-              msg: "Booking successful!",
+              msg: "Booking successful, use the QR code for the entry!",
             });
           }
         } else {
@@ -224,10 +224,20 @@ dashboardRouter.post("/getQR", (req, res, next) => {
   });
 });
 
-dashboardRouter.post("/regenqr", (req, res, next) => {
-  jwt.verify(req.cookies["Dineat"], process.env.LOB, (err, data) => {
+dashboardRouter.post("/reissue", (req, res, next) => {
+  jwt.verify(req.cookies["Dineat"], process.env.LOB, async (err, data) => {
     if (!err) {
       try {
+        const query = await pool.query("Update bookings set uid = $1 where id = $2 and uid != $3", [
+          uniqueKey(),
+          req.body.id,
+          "expired",
+        ]);
+        if (query.rowCount === 1) {
+          return res.json({ issued: true, msg: "New ticket issued!" });
+        } else {
+          return res.json({ msg: "Ticket already used!" });
+        }
       } catch (err) {
         console.log(err);
         return res.status(500).json({ msg: "Internal Server Error :/" });
