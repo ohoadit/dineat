@@ -8,26 +8,27 @@ const store = new Vuex.Store({
   state: {
     user: {
       username: "",
-      cookie: ""
+      cookie: "",
     },
     resMin: [],
-    restaurants: []
+    restaurants: [],
+    cuisines: [],
   },
   mutations: {
-
-    setUser (state, payload) {
-      Object.assign(state.user, payload)
+    setUser(state, payload) {
+      Object.assign(state.user, payload);
     },
 
-    setRestaurants (state, eateries) {
-      state.restaurants = eateries
+    setRestaurants(state, payload) {
+      state.restaurants = payload.eateries;
+      state.cuisines = payload.cuisines;
     },
 
-    minifier (state) {
+    minifier(state) {
       if (state.resMin.length) {
         return;
       }
-      state.restaurants.forEach(restaurant => {
+      state.restaurants.forEach((restaurant) => {
         let combined = "";
         for (const prop in restaurant) {
           combined += restaurant[prop];
@@ -36,33 +37,38 @@ const store = new Vuex.Store({
       });
     },
 
-    sessionStarted (state) {
+    sessionStarted(state) {
       const check = setInterval(() => {
         if (document.cookie !== state.user.cookie) {
           if (router.currentRoute.name !== "Login") {
-              router.push("/login").catch(err => {})
+            router.push("/login").catch((err) => {});
           }
           clearInterval(check);
         }
       }, 1000);
     },
 
-    sessionEnded (state) {
-      Object.assign(state.user, {username: '', cookie: ''})
-    }
+    sessionEnded(state) {
+      Object.assign(state.user, { username: "", cookie: "" });
+    },
   },
 
   getters: {
-    fetchRestaurants (state) {
+    fetchCuisines(state) {
+      return state.cuisines;
+    },
+
+    fetchRestaurants(state) {
       return state.restaurants;
     },
 
-    searchRestaurant: state => sentence => {
+    searchRestaurant: (state) => (sentence) => {
       store.commit("minifier");
       const arr = [];
+      state.restaurants.filter((restaurant) => restaurant.name.toLowerCase() === sentence);
+      const lexicons = sentence.split(" ").filter((token) => state.cuisines.includes(token));
 
-      const lexicons = sentence.split(" ").filter(token => token.length >= 3);
-      lexicons.forEach(lexicon => {
+      lexicons.forEach((lexicon) => {
         state.resMin.forEach((restaurant, index) => {
           if (restaurant.includes(lexicon)) {
             if (!arr.includes(restaurant)) {
@@ -72,25 +78,27 @@ const store = new Vuex.Store({
         });
       });
       return arr;
-    }
+    },
   },
   actions: {
-    async grabRestaurants (context, state) {
-      const req = await fetch('/master/pull', {
-        method: 'POST',
+    async grabRestaurants(context) {
+      fetch("/master/pull", {
+        method: "POST",
         headers: {
-          'Accept': 'application/JSON',
+          Accept: "application/json",
         },
-        credentials: 'same-origin'
+        credentials: "same-origin",
       })
-      const payload = await req.json()
-      if (payload.valid) {
-        context.commit('setRestaurants', payload.places)
-      }
-    }
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.valid) {
+            context.commit("setRestaurants", { eateries: data.places, cuisines: data.cuisines });
+          }
+        })
+        .catch((err) => {});
+    },
   },
-  modules: {}
+  modules: {},
 });
-
 
 export default store;

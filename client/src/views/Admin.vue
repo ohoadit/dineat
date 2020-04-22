@@ -12,12 +12,7 @@
       <template v-slot:extension>
         <v-tabs v-model="active" fixed-tabs>
           <v-tabs-slider></v-tabs-slider>
-          <v-tab
-            v-for="(tab, i) in tabs"
-            :key="i"
-            :href="tab.link"
-            @click="caller(tab.call)"
-          >
+          <v-tab v-for="(tab, i) in tabs" :key="i" :href="tab.link" @click="caller(tab.call)">
             <v-icon left>{{ tab.icon }}</v-icon>
             {{ tab.name }}
           </v-tab>
@@ -49,9 +44,7 @@
                   </tr>
                 </template>
                 <template v-slot:item.action="{ item }">
-                  <v-btn icon @click="editRestaurant(item)"
-                    ><v-icon>mdi-pencil</v-icon></v-btn
-                  >
+                  <v-btn icon @click="editRestaurant(item)"><v-icon>mdi-pencil</v-icon></v-btn>
                 </template>
               </v-data-table>
               {{ fetchRestaurants }}
@@ -71,11 +64,7 @@
       </v-tab-item>
       <v-tab-item id="users">
         <v-container class="container">
-          <v-progress-linear
-            color="primary"
-            indeterminate
-            :active="grep"
-          ></v-progress-linear>
+          <v-progress-linear color="primary" indeterminate :active="grep"></v-progress-linear>
           <v-data-table
             :headers="userTableHeaders"
             :items="userData"
@@ -107,39 +96,43 @@
             <v-card tile>
               <v-toolbar elevation="1">
                 <v-toolbar-title>Resetter Link</v-toolbar-title>
-            </v-toolbar>
-            <div class="px-10 my-10">
-              <v-select v-model="domain" :items="domainNames" label="Domain" :rules="[rules.isEmpty]"></v-select>
-            </div>
-            <v-card-actions>
-              <v-spacer></v-spacer>
-              <v-btn text color="primary" class="send" @click="resetUser">Send</v-btn>
-            </v-card-actions>
+              </v-toolbar>
+              <div class="px-10 my-10">
+                <v-select
+                  v-model="domain"
+                  :items="domainNames"
+                  label="Domain"
+                  :rules="[rules.isEmpty]"
+                ></v-select>
+              </div>
+              <v-card-actions>
+                <v-spacer></v-spacer>
+                <v-btn text color="primary" class="send" @click="resetUser">Send</v-btn>
+              </v-card-actions>
             </v-card>
           </v-dialog>
         </v-container>
       </v-tab-item>
     </v-tabs-items>
-    <v-dialog
-      v-model="addDialog"
-      fullscreen
-      transition="dialog-bottom-transition"
-    >
+    <v-dialog v-model="addDialog" fullscreen transition="dialog-bottom-transition">
       <v-card tile color="#f6f7f9">
         <v-app-bar color="primary" fixed>
-          <v-btn icon color="white" @click="addDialog = false"
-            ><v-icon>mdi-close</v-icon></v-btn
-          >
+          <v-btn icon color="white" @click="addDialog = false"><v-icon>mdi-close</v-icon></v-btn>
           <v-toolbar-title class="white--text">
             Add a new Restaurant
           </v-toolbar-title>
           <v-spacer></v-spacer>
-          <v-progress-linear color="white" striped indeterminate absolute bottom height="3" :active="push"></v-progress-linear>
+          <v-progress-linear
+            color="white"
+            striped
+            indeterminate
+            absolute
+            bottom
+            height="3"
+            :active="push"
+          ></v-progress-linear>
         </v-app-bar>
-        <v-container
-          class="mt-5"
-          :class="!this.$vuetify.breakpoint.xsOnly ? 'pa-10' : ''"
-        >
+        <v-container class="mt-5" :class="!this.$vuetify.breakpoint.xsOnly ? 'pa-10' : ''">
           <v-card class="mt-10 pa-10" tile elevation="5">
             <v-row justify="center">
               <v-col cols="12" xs="12" sm="10">
@@ -153,12 +146,7 @@
                 ></v-file-input>
                 <v-row justify="center">
                   <v-col cols="11" xs="10">
-                    <v-img
-                      :src="imageURL"
-                      v-show="image"
-                      max-width="400px"
-                      max-height="400px"
-                    />
+                    <v-img :src="imageURL" v-show="image" max-width="400px" max-height="400px" />
                   </v-col>
                 </v-row>
                 <v-form ref="form" @submit.prevent="handleUpload">
@@ -236,9 +224,7 @@
         </v-container>
       </v-card>
     </v-dialog>
-    <v-snackbar v-model="snackbar" :color="color" :timeout="timeout">{{
-      message
-    }}</v-snackbar>
+    <v-snackbar v-model="snackbar" :color="color" :timeout="timeout">{{ message }}</v-snackbar>
   </v-app>
 </template>
 
@@ -254,96 +240,55 @@ export default {
         link: "#manager",
         name: "Restaurants",
         call: "",
-        icon: "mdi-silverware-fork-knife"
+        icon: "mdi-silverware-fork-knife",
       },
       {
         link: "#users",
         name: "Users",
         call: "fetchUsers",
-        icon: "mdi-account"
-      }
+        icon: "mdi-account",
+      },
     ],
     resTableHeaders: [
       {
         text: "Name",
-        value: "name"
+        value: "name",
       },
       {
         text: "Speciality",
-        value: "speciality"
+        value: "speciality",
       },
       {
         text: "Location",
-        value: "location"
+        value: "location",
       },
       {
-        value: "action"
-      }
+        value: "action",
+      },
     ],
     userTableHeaders: [
       {
         text: "Username",
-        value: "username"
+        value: "username",
       },
       {
         text: "Date",
-        value: "date"
+        value: "date",
       },
       {
         text: "Time",
-        value: "time"
+        value: "time",
       },
       {
         text: "Status",
-        value: "status"
+        value: "status",
       },
       {
-        value: "action"
-      }
+        value: "action",
+      },
     ],
     specialities: [],
-    cuisines: [
-      "Gujarati",
-      "South Indian",
-      "Punjabi",
-      "North Indian",
-      "Thai Food",
-      "Fast Food",
-      "Cafe",
-      "Bengali",
-      "Mexican",
-      "Continental",
-      "Italian",
-      "Chinese",
-      "Barbeque",
-      "Drinks",
-      "Desserts",
-      "Fine Dining",
-      "Kathiyawadi",
-      "Rajasthani",
-      "Desi",
-      "Tea",
-      "Coffee",
-      "Pizza",
-      "Burger",
-      "Paneer",
-      "Sizzlers",
-      "Waffle",
-      "Cake",
-      "Sandwich",
-      "Pastry",
-      "Thali",
-      "Tacos",
-      "Handvo",
-      "Dhokla",
-      "Idli",
-      "Vada",
-      "Dosa",
-      "Upma",
-      "Fafda",
-      "Jalebi",
-      "Khaman"
-    ],
+    cuisines: [],
     restaurantData: [],
     userData: [],
     addDialog: false,
@@ -356,30 +301,31 @@ export default {
     tables: 7,
     morning: [0, 24],
     evening: [0, 24],
-    username: '',
+    username: "",
     domainNames: ["gmail.com", "iite.indusuni.ac.in", "indusuni.ac.in"],
     domainDialog: false,
-    domain: '',
+    domain: "",
     imageError: "",
     selError: "",
     rules: {
-      isEmpty: v => !!v || "Should not be empty"
+      isEmpty: (v) => !!v || "Should not be empty",
     },
     grep: false,
     push: false,
     snackbar: false,
     timeout: 7000,
     message: "",
-    color: ""
+    color: "",
   }),
   computed: {
     fetchRestaurants() {
+      this.cuisines = this.$store.getters.fetchCuisines;
       this.specialities = this.cuisines.slice(0, 20);
       this.restaurantData = this.$store.getters.fetchRestaurants;
-    }
+    },
   },
-  mounted () {
-    this.$store.dispatch('grabRestaurants');
+  mounted() {
+    this.$store.dispatch("grabRestaurants");
   },
   methods: {
     setItems() {
@@ -402,14 +348,14 @@ export default {
       if (!this.image) {
         return (this.imageURL = "");
       }
-      ["image/jpg", "image/jpeg", "image/png"].filter(
-        imageType => this.image.type === imageType
-      ).length
+      ["image/jpg", "image/jpeg", "image/png"].filter((imageType) => this.image.type === imageType)
+        .length
         ? (this.imageURL = URL.createObjectURL(this.image))
         : (this.imageError = "Invalid image");
     },
     async handleUpload() {
       this.imageError = "";
+      console.log(this.cuisines);
       if (!this.$refs.form.validate()) {
         if (!this.image) {
           this.imageError = "Invalid Image";
@@ -419,13 +365,16 @@ export default {
       if (
         !this.image ||
         !["image/jpg", "image/jpeg", "image/png"].filter(
-          imageType => this.image.type === imageType
+          (imageType) => this.image.type === imageType
         ).length
       ) {
         return (this.imageError = "Invalid image");
       }
-      this.push = true
-      let openHours = JSON.stringify(this.morning) === "[0,12]" && JSON.stringify(this.evening) === "[12,24]" ? "24 hrs" : this.morning.join('-') + " "+ this.evening.join('-')
+      this.push = true;
+      let openHours =
+        JSON.stringify(this.morning) === "[0,12]" && JSON.stringify(this.evening) === "[12,24]"
+          ? "24 hrs"
+          : this.morning.join("-") + " " + this.evening.join("-");
       let formdata = new FormData();
       formdata.append("name", this.name);
       formdata.append("speciality", this.forte);
@@ -438,19 +387,19 @@ export default {
       const upload = await fetch("/master/collect", {
         method: "POST",
         headers: {
-          Accept: "application/json"
+          Accept: "application/json",
         },
         credentials: "same-origin",
-        body: formdata
+        body: formdata,
       });
-      this.push = false
+      this.push = false;
       const receipt = await upload.json();
       if (receipt.valid) {
         this.color = "teal accent-4";
         this.snackbar = true;
         this.message = receipt.msg;
-        this.addDialog = false
-        this.$store.state.restaurants.unshift(receipt.data)
+        this.addDialog = false;
+        this.$store.state.restaurants.unshift(receipt.data);
       } else {
         this.color = "red lighten-1";
         this.snackbar = true;
@@ -462,9 +411,9 @@ export default {
         method: "POST",
         headers: {
           Accept: "application/json",
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
         },
-        credentials: "same-origin"
+        credentials: "same-origin",
       });
       const getUsers = await records.json();
       if (getUsers.valid) {
@@ -481,21 +430,19 @@ export default {
         method: "POST",
         headers: {
           Accept: "application/json",
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          user: userinfo.username
+          user: userinfo.username,
         }),
-        credentials: "same-origin"
+        credentials: "same-origin",
       });
       const reply = await res.json();
 
       if (reply.valid && reply.dtd) {
         this.color = "teal accent-4";
         this.snackbar = true;
-        this.userData = this.userData.filter(
-          user => user.username !== userinfo.username
-        );
+        this.userData = this.userData.filter((user) => user.username !== userinfo.username);
       } else {
         this.color = "red lighten-1";
         this.snackbar = true;
@@ -503,13 +450,13 @@ export default {
       this.grep = false;
       this.message = reply.msg;
     },
-    setDomain (userInfo) {
-      this.domainDialog = true
-      this.username = userInfo.username
-      console.log(this.username)
+    setDomain(userInfo) {
+      this.domainDialog = true;
+      this.username = userInfo.username;
+      console.log(this.username);
     },
     async resetUser() {
-      if(!this.domain) {
+      if (!this.domain) {
         return;
       }
       this.grep = true;
@@ -518,13 +465,13 @@ export default {
         method: "POST",
         headers: {
           Accept: "application/json",
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
         },
         credentials: "same-origin",
         body: JSON.stringify({
           username: this.username,
-          domain: this.domain
-        })
+          domain: this.domain,
+        }),
       });
       const receipt = await res.json();
       if (receipt.sent) {
@@ -539,11 +486,10 @@ export default {
     },
     logout() {
       this.$router.push("/login");
-      document.cookie =
-        "Dineat=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      document.cookie = "Dineat=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
       this.$store.commit("sessionEnded");
-    }
-  }
+    },
+  },
 };
 </script>
 
@@ -555,5 +501,4 @@ export default {
 .heading {
   border-bottom: solid 1px #dbdbdb;
 }
-
 </style>
