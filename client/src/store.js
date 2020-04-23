@@ -13,6 +13,7 @@ const store = new Vuex.Store({
     resMin: [],
     restaurants: [],
     cuisines: [],
+    cuiMin: "",
   },
   mutations: {
     setUser(state, payload) {
@@ -28,6 +29,11 @@ const store = new Vuex.Store({
       if (state.resMin.length) {
         return;
       }
+      state.cuiMin = state.cuisines
+        .join("")
+        .replace(/\s+/g, "")
+        .toLowerCase();
+
       state.restaurants.forEach((restaurant) => {
         let combined = "";
         for (const prop in restaurant) {
@@ -65,9 +71,26 @@ const store = new Vuex.Store({
     searchRestaurant: (state) => (sentence) => {
       store.commit("minifier");
       const arr = [];
-      state.restaurants.filter((restaurant) => restaurant.name.toLowerCase() === sentence);
-      const lexicons = sentence.split(" ").filter((token) => state.cuisines.includes(token));
-
+      const nameMatch = state.restaurants.filter(
+        (restaurant) => restaurant.name.toLowerCase() === sentence
+      );
+      if (nameMatch.length) {
+        return nameMatch;
+      }
+      console.log(nameMatch);
+      const cuisineMatch = [];
+      const min = sentence.replace(/\s+/, "");
+      if (state.cuiMin.includes(min)) {
+        state.resMin.forEach((res, index) => {
+          if (res.includes(min)) {
+            cuisineMatch.push(state.restaurants[index]);
+          }
+        });
+        if (cuisineMatch.length) {
+          return cuisineMatch;
+        }
+      }
+      const lexicons = sentence.split(" ").filter((token) => token.length > 3);
       lexicons.forEach((lexicon) => {
         state.resMin.forEach((restaurant, index) => {
           if (restaurant.includes(lexicon)) {

@@ -588,7 +588,9 @@ export default {
       if (this.speech === "") {
         return;
       }
+      console.time("Search");
       this.data = this.$store.getters.searchRestaurant(this.speech.toLowerCase());
+      console.timeEnd("Search");
     },
 
     loadRestaurants() {
