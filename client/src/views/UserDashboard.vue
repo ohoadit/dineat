@@ -5,6 +5,14 @@
         <v-img src="" max-height="32" max-width="32"></v-img>
       </div>
       <v-toolbar-title class="appTitle font-weight-medium">Dineat</v-toolbar-title>
+      <v-progress-linear
+        color="primary"
+        indeterminate
+        top
+        absolute
+        height="4"
+        :active="progress"
+      ></v-progress-linear>
       <v-spacer></v-spacer>
       <v-menu offsetY right origin="center center" transition="scroll-y-transition">
         <template v-slot:activator="{ on }">
@@ -170,6 +178,13 @@
                   ><v-icon>mdi-close</v-icon></v-btn
                 >
                 <v-toolbar-title class="title">Booking Details</v-toolbar-title>
+                <v-progress-linear
+                  color="grey lighten-5"
+                  indeterminate
+                  absolute
+                  top
+                  :active="bkngProgress"
+                ></v-progress-linear>
               </v-app-bar>
               <v-container class="pt-10 mt-10" fluid>
                 <v-row justify="space-around">
@@ -316,17 +331,10 @@
         <v-container class="wrapper2">
           <v-row justify="center" align="center">
             <v-col cols="12" xs="12" sm="10" md="9" lg="8">
-              <v-progress-linear
-                indeterminate
-                color="primary"
-                :active="progress"
-                class="mt-10"
-                v-if="progress"
-              ></v-progress-linear>
               <v-card class="pa-10 ma-10 white--text" v-if="msg && !progress" :color="msgColor">
                 <p align="center" class="title font-weight-regular">{{ msg }}</p>
               </v-card>
-              <v-card v-for="(bkng, i) in bookings" :key="i" class="mt-10 pa-2" elevation="5">
+              <v-card v-for="(bkng, i) in bookings" :key="i" class="mt-10 pa-2" elevation="3">
                 <v-card-title class="headline"
                   >{{ bkng.name }}
                   <span
@@ -363,7 +371,7 @@
               ><v-img :src="qr" elevation="5"></v-img>
             </v-card>
           </v-row>
-          <v-row class="mt-5" justify="center">
+          <v-row class="mt-5" justify="center" v-if="textContent">
             <p class="headline" v-if="textContent">
               {{ textContent }}
             </p>
@@ -390,12 +398,13 @@ export default {
     voiceModule: false,
     alert: false,
     bookingDialog: false,
+    bkngProgress: false,
     currentBooking: {},
     infinite: true,
     data: [],
     activeTab: null,
     bookings: [],
-    progress: true,
+    progress: false,
     textContent: "",
     showQR: false,
     qr: "",
@@ -504,7 +513,7 @@ export default {
       const speaker = new SpeechSynthesisUtterance(message);
       speaker.voice = this.voice;
       speaker.pitch = 1;
-      speaker.rate = 1;
+      speaker.rate = 0.9;
       this.synthesis.speak(speaker);
     },
     dictate(toSpeak) {
@@ -790,6 +799,7 @@ export default {
       if (!this.$refs.book.validate()) {
         return;
       }
+      this.bkngProgress = true;
       const ack = await fetch("/bank/book", {
         method: "POST",
         headers: {
@@ -816,12 +826,14 @@ export default {
         this.showSnackbar("success", saved.msg);
         this.qr = saved.ticket;
       }
+      this.bkngProgress = false;
     },
     resetForm() {
       this.$refs.book.reset();
     },
     async fetchBookings() {
       this.msg = "";
+      this.progress = true;
       try {
         const res = await fetch("/bank/passbook", {
           method: "POST",
@@ -842,6 +854,7 @@ export default {
       } catch (err) {}
     },
     async fetchQRCode(id, name) {
+      this.progress = true;
       const res = await fetch("/bank/getQR", {
         method: "POST",
         headers: {
@@ -860,9 +873,11 @@ export default {
       } else {
         this.showSnackbar("err", ticket.msg);
       }
+      this.progress = false;
     },
-    genNewTicket(id) {
-      fetch("/bank/reissue", {
+    async genNewTicket(id) {
+      this.progress = true;
+      const res = await fetch("/bank/reissue", {
         method: "POST",
         headers: {
           Accept: "application/json",
@@ -872,12 +887,10 @@ export default {
         body: JSON.stringify({
           id: id,
         }),
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          data.issued ? this.showSnackbar("success", data.msg) : this.showSnackbar("err", data.msg);
-        })
-        .catch((err) => {});
+      });
+      const data = await res.json();
+      data.issued ? this.showSnackbar("success", data.msg) : this.showSnackbar("err", data.msg);
+      this.progress = false;
     },
     logout() {
       this.$router.replace("/login");
