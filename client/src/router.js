@@ -1,10 +1,10 @@
 import Vue from "vue";
 import VueRouter from "vue-router";
 const Login = () => import(/* webpackChunkName: 'rtr' */ "./views/Login.vue");
-const UserDashboard = () =>
-  import(/* webpackChunkName: 'rtr' */ "./views/UserDashboard.vue");
+const UserDashboard = () => import(/* webpackChunkName: 'rtr' */ "./views/UserDashboard.vue");
 const Reset = () => import(/* webpackChunkName: 'rtr' */ "./views/Reset.vue");
 const Admin = () => import(/* webpackChunkName: 'rtr' */ "./views/Admin.vue");
+const Eatery = () => import(/* webpackChunkName: 'rtr' */ "./views/Eatery.vue");
 import store from "@/store";
 
 Vue.use(VueRouter);
@@ -19,6 +19,11 @@ const isAuthenticated = async () => {
 };
 
 const routes = [
+  {
+    path: "/eatery",
+    name: "Eatery",
+    component: Eatery,
+  },
   {
     path: "/login",
     name: "Login",
