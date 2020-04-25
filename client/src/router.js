@@ -20,18 +20,19 @@ const isAuthenticated = async () => {
 
 const routes = [
   {
-    path: "/eatery",
-    name: "Eatery",
-    component: Eatery,
-  },
-  {
     path: "/login",
     name: "Login",
     component: Login,
     beforeEnter: async (to, from, next) => {
       const data = await isAuthenticated();
       if (data.valid) {
-        data.admin ? next("/admin") : next("/dashboard");
+        if (data.eatery) {
+          next("/eatery");
+        } else if (data.admin) {
+          next("/admin");
+        } else {
+          next("/dashboard");
+        }
       } else {
         next();
       }
@@ -44,7 +45,13 @@ const routes = [
     beforeEnter: async (to, from, next) => {
       const data = await isAuthenticated();
       if (data.valid) {
-        data.admin ? next("/admin") : next();
+        if (data.eatery) {
+          next("/eatery");
+        } else if (data.admin) {
+          next("/admin");
+        } else {
+          next();
+        }
         store.commit("setUser", {
           username: data.user.username,
           cookie: document.cookie,
@@ -55,7 +62,30 @@ const routes = [
       }
     },
   },
-
+  {
+    path: "/eatery",
+    name: "Eatery",
+    component: Eatery,
+    beforeEnter: async (to, from, next) => {
+      const data = await isAuthenticated();
+      if (data.valid) {
+        if (data.eatery) {
+          next();
+        } else if (data.admin) {
+          next("/admin");
+        } else {
+          next("/dashboard");
+        }
+      } else {
+        next("/login");
+      }
+      store.commit("setUser", {
+        username: data.user.username,
+        cookie: document.cookie,
+      });
+      store.commit("sessionStarted");
+    },
+  },
   {
     path: "/admin",
     name: "Admin",
@@ -63,7 +93,13 @@ const routes = [
     beforeEnter: async (to, from, next) => {
       const data = await isAuthenticated();
       if (data.valid) {
-        data.admin ? next() : next("/dashboard");
+        if (data.admin) {
+          next();
+        } else if (data.eatery) {
+          next("/eatery");
+        } else {
+          next("/dashboard");
+        }
         store.commit("setUser", {
           username: data.user.username,
           cookie: document.cookie,

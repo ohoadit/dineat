@@ -8,11 +8,17 @@ const dashboardRouter = express.Router();
 dashboardRouter.get("/", (req, res, next) => {
   jwt.verify(req.cookies["Dineat"], process.env.LOB, (err, payload) => {
     if (!err) {
-      return res.json({
-        valid: true,
-        user: payload,
-        admin: payload.username === "feedbackloop08" ? true : false,
-      });
+      return payload.id
+        ? res.json({
+            valid: true,
+            user: payload,
+            eatery: true,
+          })
+        : res.json({
+            valid: true,
+            user: payload,
+            admin: payload.username === "feedbackloop08" ? true : false,
+          });
     } else {
       return res.json({ valid: false });
     }
