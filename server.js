@@ -12,6 +12,7 @@ const loginRouter = require("./routes/login");
 const { registerRouter } = require("./routes/register");
 const dashboardRouter = require("./routes/dashboard");
 const masterRouter = require("./routes/master");
+const eateryRouter = require("./routes/eatery");
 
 app
   .use(morgan("dev"))
@@ -23,7 +24,8 @@ app
   .use("/gate", loginRouter)
   .use("/admit", registerRouter)
   .use("/bank", dashboardRouter)
-  .use("/master", masterRouter);
+  .use("/master", masterRouter)
+  .use("/rest", eateryRouter);
 
 app.use(express.static(__dirname + "/client/dist/"));
 app.get("/*", (req, res) => {

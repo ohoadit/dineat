@@ -18,6 +18,7 @@
           <qrcode-stream :camera="camera" @init="onInit" @decode="decodeTicket"></qrcode-stream>
         </div>
       </v-row>
+      <v-row> </v-row>
       <v-snackbar v-model="snackbar" :color="color"
         >{{ snackmsg }} <v-btn text @click="snackbar = false">CLOSE</v-btn></v-snackbar
       >
@@ -51,13 +52,13 @@ export default {
       } catch (err) {
         this.openCamera = false;
         if (err.name === "NotAllowedError") {
-          this.showSnackbar("err", "Camera access is needed for the QR scan.");
+          this.showSnackbar("err", "Camera access is needed for scanning the QR code");
         } else if (err.name === "NotFoundError") {
           this.showSnackbar("err", "Camera module not found on this device");
         } else if (err.name === "NotSupportedError") {
           this.showSnackbar(
             "err",
-            "Secure origin is required for the camera usage toggle it using flags."
+            "Secure origin is required for the camera usage; toggle it using flags."
           );
         } else {
           this.showSnackbar("err", "Cannot use camera stream on this device :/");
@@ -65,7 +66,23 @@ export default {
       }
     },
     decodeTicket(token) {
-      fetch("/");
+      fetch("/rest/verify", {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        credentials: "same-origin",
+        body: JSON.stringify({
+          ticket: token,
+        }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          console.log(data);
+        })
+        .catch((err) => console.log(err));
+      this.stopStreaming();
     },
     startStreaming() {
       this.openCamera = true;
