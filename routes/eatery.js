@@ -10,7 +10,7 @@ eateryRouter.post("/gate", async (req, res, next) => {
       req.body.username,
     ]);
     if (!user.rowCount) {
-      return res.status(401).json({ field: "userError", msg: "Invalid ID" });
+      return res.status(401).json({ field: "idErr", msg: "Invalid ID" });
     } else {
       bcrypt.compare(req.body.password, user.rows[0].password, (err, same) => {
         if (!err) {
@@ -25,13 +25,13 @@ eateryRouter.post("/gate", async (req, res, next) => {
           });
           return res.json({ matched: true });
         } else {
-          return res.status(401).json({ field: "passError", msg: "Invalid password" });
+          return res.status(401).json({ field: "passErr", msg: "Invalid password" });
         }
       });
     }
   } catch (err) {
     console.log(err);
-    return res.status(500).json({ field: "passError", msg: "Internal Server Error :/" });
+    return res.status(500).json({ field: "passErr", msg: "Internal Server Error :/" });
   }
 });
 

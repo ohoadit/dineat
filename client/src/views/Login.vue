@@ -35,17 +35,18 @@
                 @click="signupDialog = true"
                 >Signup</v-btn
               >
-              <v-btn
-                color="primary"
-                type="submit"
-                width="100"
-                class="mt-5"
-                elevation="3"
+              <v-btn color="primary" type="submit" width="100" class="mt-5" elevation="3"
                 >Signin</v-btn
               >
             </v-row>
           </v-form>
         </v-col>
+      </v-row>
+      <v-row justify="center" class="mt-10">
+        <v-btn tile outlined color="primary" @click="restDialog = true">
+          <v-icon left>mdi-silverware-fork-knife</v-icon>
+          Restaurant
+        </v-btn>
       </v-row>
     </v-container>
     <v-container v-if="this.$vuetify.breakpoint.smAndUp" fluid class="wrapper">
@@ -53,12 +54,7 @@
         <v-col cols="12">
           <p class="display-1 font-weight-regular" align="center">Dineat</p>
           <v-row justify="center" class="mt-10">
-            <v-card
-              width="500px"
-              max-height="500px"
-              elevation="5"
-              class="pa-5 pt-10"
-            >
+            <v-card width="500px" max-height="500px" elevation="5" class="pa-5 pt-10">
               <v-card-text>
                 <v-form ref="form" @submit.prevent="onSubmit">
                   <v-text-field
@@ -87,15 +83,8 @@
                   </v-text-field>
                   <v-card-actions class="mt-5">
                     <v-row justify="space-around" align="center">
-                      <v-btn
-                        color="primary"
-                        @click="signupDialog = true"
-                        width="90"
-                        >Signup</v-btn
-                      >
-                      <v-btn color="primary" type="submit" width="90"
-                        >Signin</v-btn
-                      >
+                      <v-btn color="primary" @click="signupDialog = true" width="90">Signup</v-btn>
+                      <v-btn color="primary" type="submit" width="90">Signin</v-btn>
                     </v-row>
                   </v-card-actions>
                 </v-form>
@@ -104,14 +93,16 @@
           </v-row>
         </v-col>
       </v-row>
+      <v-row justify="center" class="mt-10">
+        <v-btn tile outlined color="primary" @click="restDialog = true">
+          <v-icon left>mdi-silverware-fork-knife</v-icon>
+          Restaurant
+        </v-btn>
+      </v-row>
     </v-container>
     <v-dialog v-model="signupDialog" max-width="550px">
       <v-card tile>
-        <v-progress-linear
-          indeterminate
-          color="primary"
-          :active="showProgress"
-        ></v-progress-linear>
+        <v-progress-linear indeterminate color="primary" :active="showProgress"></v-progress-linear>
         <v-card-text class="pt-10">
           <v-form ref="signup" @submit.prevent>
             <v-text-field
@@ -140,9 +131,37 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-    <v-snackbar v-model="snackbar" :color="color" :timeout="timeout">{{
-      message
-    }}</v-snackbar>
+    <v-dialog v-model="restDialog" max-width="500px">
+      <v-card tile>
+        <v-card-title class="headline font-weight-regular">Restaurant</v-card-title>
+        <v-card-text>
+          <v-form ref="reForm" @submit.prevent="onSignin">
+            <v-text-field
+              v-model="id"
+              name="id"
+              label="Id"
+              :rules="[rules.isEmpty, rules.isNumber]"
+              :error-messages="idErr"
+              validate-on-blur
+            ></v-text-field>
+            <v-text-field
+              v-model="pass"
+              type="password"
+              name="id"
+              label="Password"
+              :rules="[rules.isEmpty, rules.checkLength]"
+              :error-messages="passErr"
+              validate-on-blur
+            ></v-text-field>
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn type="submit" color="primary">Submit</v-btn>
+            </v-card-actions>
+          </v-form>
+        </v-card-text>
+      </v-card>
+    </v-dialog>
+    <v-snackbar v-model="snackbar" :color="color" :timeout="timeout">{{ message }}</v-snackbar>
   </v-app>
 </template>
 
@@ -156,8 +175,13 @@ export default {
     valid: false,
     userError: "",
     passError: "",
-    emailError: "",
+    restDialog: false,
+    id: "",
+    pass: "",
+    idErr: "",
+    passErr: "",
     signupDialog: false,
+    emailError: "",
     disabled: false,
     showProgress: false,
     snackbar: false,
@@ -167,6 +191,7 @@ export default {
     rules: {
       isEmpty: (v) => !!v || "Should not be empty",
       checkLength: (v) => v.length >= 8 || "Minimum 8 characters",
+      isNumber: (v) => /^\d+$/.test(v) || "Should be a number",
     },
   }),
 
@@ -190,13 +215,7 @@ export default {
       });
       let res = await response.json();
       if (res.matched) {
-        res.admin
-          ? this.$router.push("/admin")
-          : this.$router.push("/dashboard");
-        this.$store.commit("setUser", {
-          username: this.username,
-          cookie: document.cookie,
-        });
+        res.admin ? this.$router.go("/admin") : this.$router.go("/dashboard");
       } else {
         this[res.field] = res.msg;
       }
@@ -235,6 +254,31 @@ export default {
         this.email = "";
       }
       this.message = receipt.msg;
+    },
+    onSignin() {
+      this.idErr = this.passErr = "";
+      if (!this.$refs.reForm.validate()) {
+        return;
+      }
+      fetch("/rest/gate", {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: this.id,
+          password: this.pass,
+        }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.matched) {
+            this.$router.go("/eatery");
+          } else {
+            this[data.field] = data.msg;
+          }
+        });
     },
   },
 };
