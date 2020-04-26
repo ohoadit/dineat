@@ -1,6 +1,6 @@
 require("dotenv").config();
 const express = require("express");
-const { pool } = require("../auth");
+const { pool, bcrypt } = require("../auth");
 const jwt = require("jsonwebtoken");
 const multer = require("multer");
 
@@ -164,6 +164,29 @@ master.post("/pull", (req, res, next) => {
     } catch (err) {
       console.log(err);
       return res.status(500).json({ msg: "Database Server Error :/" });
+    }
+  });
+});
+
+master.post("/reset", (req, res, next) => {
+  jwt.verify(req.cookies["Dineat"], process.env.LOB, async (err, payload) => {
+    if (!err && payload.username === "feedbackloop08" && req.body.key === process.env.KEY) {
+      let hash = "";
+      bcrypt.hash(req.body.password, 10, (err, string) => (hash = string));
+      try {
+        const update = await pool.query("Update restaurant set password = $1 where id = $2", [
+          hash,
+          req.body.resId,
+        ]);
+        if (update.rowCount) {
+          return res.json({ success: true, msg: "Password saved successfully!" });
+        }
+      } catch (err) {
+        console.log(err);
+        return res.status(500).json({ msg: "Internal Server Error :/" });
+      }
+    } else {
+      return res.status(401).json({ msg: "Invalid Key!" });
     }
   });
 });

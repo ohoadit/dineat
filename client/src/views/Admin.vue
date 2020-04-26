@@ -3,12 +3,17 @@
     <v-app-bar fixed color="white">
       <v-toolbar-title class="headline">Dineat</v-toolbar-title>
       <v-spacer></v-spacer>
-      <v-toolbar-items>
-        <v-btn text @click="logout" color="primary">
-          <v-icon left>mdi-logout</v-icon>
-          Logout
-        </v-btn>
-      </v-toolbar-items>
+      <v-menu offsetY right origin="center center" transition="scroll-y-transition">
+        <template v-slot:activator="{ on }">
+          <v-btn depressed v-on="on">
+            <v-icon left>mdi-account</v-icon>
+            {{ sessionName }}
+          </v-btn>
+        </template>
+        <v-list>
+          <v-list-item @click="logout"> <v-icon left>mdi-logout</v-icon>Logout </v-list-item>
+        </v-list>
+      </v-menu>
       <template v-slot:extension>
         <v-tabs v-model="active" fixed-tabs>
           <v-tabs-slider></v-tabs-slider>
@@ -44,7 +49,16 @@
                   </tr>
                 </template>
                 <template v-slot:item.action="{ item }">
-                  <v-btn icon @click="editRestaurant(item)"><v-icon>mdi-pencil</v-icon></v-btn>
+                  <v-btn
+                    icon
+                    @click="
+                      () => {
+                        setPass = true;
+                        activeItem = item;
+                      }
+                    "
+                    ><v-icon>mdi-lock</v-icon></v-btn
+                  >
                 </template>
               </v-data-table>
               {{ fetchRestaurants }}
@@ -114,6 +128,43 @@
         </v-container>
       </v-tab-item>
     </v-tabs-items>
+    <v-dialog v-model="setPass" max-width="500px">
+      <v-card tile>
+        <v-card-title class="headline font-weight-regular"
+          >{{ activeItem.name }} ({{ activeItem.id }})</v-card-title
+        >
+        <v-card-text>
+          <v-form ref="password" @submit.prevent="setPassword">
+            <v-text-field
+              type="password"
+              v-model="key"
+              label="Key"
+              name="key"
+              :rules="[rules.isEmpty]"
+              :error-messages="keyErr"
+            ></v-text-field>
+            <v-text-field
+              type="password"
+              v-model="password"
+              label="Password"
+              name="password"
+              :rules="[rules.isEmpty, rules.checkLen]"
+            ></v-text-field>
+            <v-text-field
+              type="password"
+              v-model="confirm"
+              label="Confirm Password"
+              name="confirm"
+              :rules="[rules.isEmpty, rules.checkLen, match]"
+            ></v-text-field>
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn type="submit" class="primary" @click="setPassword">Submit</v-btn>
+            </v-card-actions>
+          </v-form>
+        </v-card-text>
+      </v-card>
+    </v-dialog>
     <v-dialog v-model="addDialog" fullscreen transition="dialog-bottom-transition">
       <v-card tile color="#f6f7f9">
         <v-app-bar color="primary" fixed>
@@ -224,7 +275,9 @@
         </v-container>
       </v-card>
     </v-dialog>
-    <v-snackbar v-model="snackbar" :color="color" :timeout="timeout">{{ message }}</v-snackbar>
+    <v-snackbar v-model="snackbar" :color="color"
+      >{{ message }} <v-btn text @click="snackbar = false">Close</v-btn></v-snackbar
+    >
   </v-app>
 </template>
 
@@ -287,6 +340,12 @@ export default {
         value: "action",
       },
     ],
+    activeItem: {},
+    setPass: false,
+    key: "",
+    keyErr: "",
+    password: "",
+    confirm: "",
     specialities: [],
     cuisines: [],
     restaurantData: [],
@@ -309,11 +368,11 @@ export default {
     selError: "",
     rules: {
       isEmpty: (v) => !!v || "Should not be empty",
+      checkLen: (v) => v.length >= 8 || "Minimum 8 characters",
     },
     grep: false,
     push: false,
     snackbar: false,
-    timeout: 7000,
     message: "",
     color: "",
   }),
@@ -323,11 +382,17 @@ export default {
       this.specialities = this.cuisines.slice(0, 20);
       this.restaurantData = this.$store.getters.fetchRestaurants;
     },
+    sessionName() {
+      return this.$store.state.user.username;
+    },
   },
   mounted() {
     this.$store.dispatch("grabRestaurants");
   },
   methods: {
+    match() {
+      return this.password === this.confirm || "Passwords aren't matching";
+    },
     setItems() {
       return this.$vuetify.breakpoint.xsOnly ? 5 : 10;
     },
@@ -340,8 +405,34 @@ export default {
       }
       this[name]();
     },
-    editRestaurant(restInfo) {
-      console.log(restInfo);
+    setPassword() {
+      if (!this.$refs.password.validate()) {
+        return;
+      }
+      fetch("/master/reset", {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        credentials: "same-origin",
+        body: JSON.stringify({
+          resId: this.activeItem.id,
+          key: this.key,
+          password: this.password,
+        }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success) {
+            this.message = data.msg;
+            this.color = "teal accent-4";
+            this.snackbar = true;
+            this.setPass = false;
+          } else {
+            this.keyErr = data.msg;
+          }
+        });
     },
     showPreview() {
       this.imageError = "";
