@@ -232,17 +232,16 @@ dashboardRouter.post("/getQR", (req, res, next) => {
 
 dashboardRouter.post("/reissue", (req, res, next) => {
   jwt.verify(req.cookies["Dineat"], process.env.LOB, async (err, data) => {
-    if (!err) {
+    if (!err && !payload.id) {
       try {
-        const query = await pool.query("Update bookings set uid = $1 where id = $2 and uid != $3", [
-          uniqueKey(),
-          req.body.id,
-          "expired",
-        ]);
+        const query = await pool.query(
+          "Update bookings set uid = $1 where id = $2 and (uid != $3 or uid != $4)",
+          [uniqueKey(), req.body.id, "expired", "used"]
+        );
         if (query.rowCount === 1) {
           return res.json({ issued: true, msg: "New ticket issued!" });
         } else {
-          return res.json({ msg: "Ticket already used!" });
+          return res.json({ msg: "Cannot regenerate a used ticket!" });
         }
       } catch (err) {
         console.log(err);

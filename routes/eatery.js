@@ -39,21 +39,44 @@ eateryRouter.post("/verify", (req, res, next) => {
   jwt.verify(req.cookies["Dineat"], process.env.LOB, async (err, payload) => {
     if (!err && payload.id) {
       const query = await pool.query(
-        "Select username, name, date, time from bookings where uid = $1 and resid = $2",
+        "Select username, name, date, time, guests from bookings where uid = $1 and resid = $2",
         [req.body.ticket, payload.id]
       );
       if (query.rowCount) {
-        if (checkDateTime(query.rows[0].date, query.rows[0].time)) {
-          return res.json({ success: true });
+        const verifyTime = checkDateTime(query.rows[0].date, query.rows[0].time);
+        if (verifyTime.notToday) {
+          return res.json({
+            color: "error",
+            icon: "mdi-alert",
+            success: false,
+            msg: "Ticket invalid for today!",
+          });
+        }
+        if (verifyTime.onTime) {
+          return res.json({
+            icon: "mdi-check-circle",
+            color: "success",
+            success: true,
+            msg: "Verified",
+            ...query.rows[0],
+          });
         } else {
-          await pool.query("update bookings set uid = $1 where uid = $2", [
-            "expired",
-            req.body.ticket,
-          ]);
-          return res.json({ success: false, msg: "QR code expired!" });
+          return res.json({
+            icon: "mdi-information",
+            color: "orange",
+            success: true,
+            diff: true,
+            msg: verifyTime.status,
+            ...query.rows[0],
+          });
         }
       } else {
-        return res.json({ success: false, msg: "Invalid QR Code" });
+        return res.json({
+          icon: "mdi-alert",
+          color: "error",
+          success: false,
+          msg: "Invalid QR Code",
+        });
       }
     } else {
       return res.status(401).json({ msg: "Invalid Request" });
@@ -62,13 +85,19 @@ eateryRouter.post("/verify", (req, res, next) => {
 });
 
 const checkDateTime = (date, time) => {
+  if (!new Date().toISOString().includes(date)) {
+    return { notToday: true };
+  }
   const current = new Date(date);
   const [hrs, mins] = time.split(":");
   const setTime = new Date(current.setHours(hrs)).setMinutes(mins);
+
   if (Math.abs(setTime - Date.now()) <= 900000) {
-    return true;
+    return { onTime: true };
   } else if (Date.now() - setTime > 900000) {
-    return false;
+    return { onTime: false, status: "Late for the reservation!" };
+  } else if (setTime - Date.now() > 900000) {
+    return { onTime: false, status: "Early for the reservation!" };
   }
 };
 module.exports = eateryRouter;

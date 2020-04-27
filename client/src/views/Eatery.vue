@@ -3,23 +3,68 @@
     <v-app-bar fixed color="white">
       <v-toolbar-title class="appTitle font-weight-medium">Dineat</v-toolbar-title>
       <v-spacer></v-spacer>
-      <v-btn depressed>
-        <v-icon left>mdi-account</v-icon>
-        React Cafe
-      </v-btn>
+
+      <v-menu offsetY bottom origin="center center" transition="scale-transition">
+        <template v-slot:activator="{ on }">
+          <v-btn depressed v-on="on">
+            <v-icon left>mdi-account</v-icon>
+            {{ username }}
+          </v-btn>
+        </template>
+        <v-list>
+          <v-list-item @click="todaysBookings">Upcoming</v-list-item>
+          <v-list-item @click="logout"> <v-icon left>mdi-logout</v-icon>Logout </v-list-item>
+        </v-list>
+      </v-menu>
     </v-app-bar>
     <v-container class="wrapper">
-      <v-row justify="space-around" align="center">
+      <v-row justify="space-around" align="center" class="px-10">
         <v-btn color="primary" @click="startStreaming">Start</v-btn>
         <v-btn color="red lighten-1 white--text" @click="stopStreaming">Stop</v-btn>
       </v-row>
       <v-row justify="center">
-        <div class="frameWrapper" v-if="openCamera">
-          <qrcode-stream :camera="camera" @init="onInit" @decode="decodeTicket"></qrcode-stream>
-        </div>
+        <v-expand-x-transition>
+          <div class="frameWrapper" v-if="openCamera">
+            <qrcode-stream :camera="camera" @init="onInit" @decode="decodeTicket"></qrcode-stream>
+          </div>
+        </v-expand-x-transition>
       </v-row>
-      <v-row> </v-row>
-      <v-snackbar v-model="snackbar" :color="color"
+      <v-row justify="center" class="mt-10 pt-10 px-10">
+        <v-slide-y-reverse-transition>
+          <v-alert
+            v-model="results"
+            text
+            :color="alert.color"
+            dismissible
+            width="500px"
+            border="left"
+          >
+            <p class="headline">
+              <v-icon left medium :color="alert.color">{{ alert.icon }}</v-icon> {{ alert.msg }}
+            </p>
+            <div v-if="alert.success" class="subtitle-1 font-weight-regular pl-10 ml-10">
+              <p>
+                <v-icon left medium :color="alert.color">mdi-account-outline</v-icon>
+                User: {{ alert.username }}
+              </p>
+              <p>
+                <v-icon left medium :color="alert.color">mdi-account-details-outline</v-icon>
+                Name: {{ alert.name }}
+              </p>
+              <p>
+                <v-icon left medium :color="alert.color">mdi-account-multiple</v-icon>
+                Guests: {{ alert.guests }}
+              </p>
+              <p><v-icon left medium :color="alert.color">mdi-clock</v-icon>{{ alert.time }}</p>
+            </div>
+            <v-row v-if="alert.diff" align="center" justify="space-around" class="mt-10">
+              <v-btn outlined :color="alert.color"> Accept</v-btn>
+              <v-btn outlined :color="alert.color">Reject</v-btn>
+            </v-row>
+          </v-alert>
+        </v-slide-y-reverse-transition>
+      </v-row>
+      <v-snackbar v-model="snackbar" :color="color" :timeout="timeout"
         >{{ snackmsg }} <v-btn text @click="snackbar = false">CLOSE</v-btn></v-snackbar
       >
     </v-container>
@@ -38,12 +83,41 @@ export default {
     snackbar: false,
     color: "",
     snackmsg: "",
+    timeout: 10000,
+    results: false,
+    alert: {},
   }),
+  computed: {
+    username() {
+      return this.$store.state.user.username;
+    },
+  },
+  watch: {
+    results(val) {
+      if (!val && this.camera === "off") {
+        this.startStreaming();
+      }
+    },
+  },
   methods: {
     showSnackbar(type, msg) {
       this.color = type === "success" ? "teal accent-4" : "red lighten-1";
       this.snackmsg = msg;
       this.snackbar = true;
+    },
+
+    startStreaming() {
+      if (this.results) {
+        this.showSnackbar("success", "Please close the dialog first!");
+        this.color = "blue";
+        return;
+      }
+      this.openCamera = true;
+      this.camera = "auto";
+    },
+    stopStreaming() {
+      this.openCamera = false;
+      this.camera = "off";
     },
     async onInit(initialized) {
       this.openCamera = true;
@@ -79,18 +153,16 @@ export default {
       })
         .then((res) => res.json())
         .then((data) => {
-          console.log(data);
+          Object.assign(this.alert, data);
+          this.results = true;
         })
-        .catch((err) => console.log(err));
+        .catch((err) => {});
       this.stopStreaming();
     },
-    startStreaming() {
-      this.openCamera = true;
-      this.camera = "auto";
-    },
-    stopStreaming() {
-      this.openCamera = false;
-      this.camera = "off";
+    logout() {
+      this.$router.push("/login");
+      document.cookie = "Dineat=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      this.$store.commit("sessionEnded");
     },
   },
 };
