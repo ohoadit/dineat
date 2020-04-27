@@ -13,7 +13,7 @@ eateryRouter.post("/gate", async (req, res, next) => {
       return res.status(401).json({ field: "idErr", msg: "Invalid ID" });
     } else {
       bcrypt.compare(req.body.password, user.rows[0].password, (err, same) => {
-        if (!err) {
+        if (same) {
           const entryPass = jwt.sign(
             { id: req.body.username, username: user.rows[0].name },
             process.env.LOB,

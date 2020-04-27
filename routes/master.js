@@ -171,8 +171,7 @@ master.post("/pull", (req, res, next) => {
 master.post("/reset", (req, res, next) => {
   jwt.verify(req.cookies["Dineat"], process.env.LOB, async (err, payload) => {
     if (!err && payload.username === "feedbackloop08" && req.body.key === process.env.KEY) {
-      let hash = "";
-      bcrypt.hash(req.body.password, 10, (err, string) => (hash = string));
+      const hash = await bcrypt.hash(req.body.password, 10);
       try {
         const update = await pool.query("Update restaurant set password = $1 where id = $2", [
           hash,
