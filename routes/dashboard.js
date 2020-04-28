@@ -135,7 +135,7 @@ dashboardRouter.post("/book", (req, res, next) => {
       try {
         if (await validSchedule(selDate, selTime.split(":"), body.resId)) {
           const check = await pool.query(
-            "Select * from bookings where username = $1 and date = $2 and resid = $3 and uid != 'expired'",
+            "Select * from bookings where username = $1 and date = $2 and resid = $3 and (uid != 'expired' and uid != 'used')",
             [payload.username, selDate, body.resId]
           );
           if (check.rowCount === 1) {
@@ -211,8 +211,11 @@ dashboardRouter.post("/getQR", (req, res, next) => {
           req.body.id,
         ]);
         const token = data.rows[0].uid;
+        console.log(token);
         if (token === "expired") {
-          return res.json({ msg: "The ticket has been used or expired." });
+          return res.json({ msg: "The ticket is no longer valid." });
+        } else if (token === "used") {
+          return res.json({ msg: "The ticket has been used!" });
         }
         if (token) {
           const url = await qrCode.toDataURL(token, options);
@@ -231,11 +234,11 @@ dashboardRouter.post("/getQR", (req, res, next) => {
 });
 
 dashboardRouter.post("/reissue", (req, res, next) => {
-  jwt.verify(req.cookies["Dineat"], process.env.LOB, async (err, data) => {
+  jwt.verify(req.cookies["Dineat"], process.env.LOB, async (err, payload) => {
     if (!err && !payload.id) {
       try {
         const query = await pool.query(
-          "Update bookings set uid = $1 where id = $2 and (uid != $3 or uid != $4)",
+          "Update bookings set uid = $1 where id = $2 and (uid != $3 and uid != $4)",
           [uniqueKey(), req.body.id, "expired", "used"]
         );
         if (query.rowCount === 1) {
