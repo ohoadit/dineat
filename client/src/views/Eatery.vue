@@ -12,7 +12,6 @@
           </v-btn>
         </template>
         <v-list>
-          <v-list-item @click="todaysBookings">Upcoming</v-list-item>
           <v-list-item @click="logout"> <v-icon left>mdi-logout</v-icon>Logout </v-list-item>
         </v-list>
       </v-menu>
@@ -58,8 +57,8 @@
               <p><v-icon left medium :color="alert.color">mdi-clock</v-icon>{{ alert.time }}</p>
             </div>
             <v-row v-if="alert.diff" align="center" justify="space-around" class="mt-10">
-              <v-btn outlined :color="alert.color"> Accept</v-btn>
-              <v-btn outlined :color="alert.color">Reject</v-btn>
+              <v-btn outlined :color="alert.color" @click="authorize('used')"> Accept</v-btn>
+              <v-btn outlined :color="alert.color" @click="authorize('expired')">Reject</v-btn>
             </v-row>
           </v-alert>
         </v-slide-y-reverse-transition>
@@ -86,6 +85,7 @@ export default {
     timeout: 10000,
     results: false,
     alert: {},
+    decoded: "",
   }),
   computed: {
     username() {
@@ -140,6 +140,8 @@ export default {
       }
     },
     decodeTicket(token) {
+      this.decoded = token;
+      this.alert = {};
       fetch("/rest/verify", {
         method: "POST",
         headers: {
@@ -155,9 +157,35 @@ export default {
         .then((data) => {
           Object.assign(this.alert, data);
           this.results = true;
+          this.stopStreaming();
         })
         .catch((err) => {});
-      this.stopStreaming();
+    },
+    authorize(flag) {
+      fetch("/rest/sanction", {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        credentials: "same-origin",
+        body: JSON.stringify({
+          status: flag,
+          token: this.decoded,
+        }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success) {
+            this.showSnackbar("success", data.msg);
+            setTimeout(() => {
+              this.results = false;
+            }, 3000);
+          } else {
+            this.showSnackbar("err", data.msg);
+          }
+        })
+        .catch((err) => {});
     },
     logout() {
       this.$router.push("/login");

@@ -35,6 +35,28 @@ eateryRouter.post("/gate", async (req, res, next) => {
   }
 });
 
+eateryRouter.post("/sanction", (req, res, next) => {
+  jwt.verify(req.cookies["Dineat"], process.env.LOB, (err, payload) => {
+    if (!err && payload.id) {
+      return pool
+        .query("Update bookings set uid = $1 where uid = $2", [req.body.status, req.body.token])
+        .then((data) =>
+          data.rowCount
+            ? res.json({
+                success: true,
+                msg: `User ${req.body.status === "used" ? "Accepted" : "Rejected"}!`,
+              })
+            : res.json({ msg: "Problem with the request" })
+        )
+        .catch((err) => {
+          console.log(err);
+          return res.status(500).json({ msg: "Internal Server Error :/" });
+        });
+    } else {
+      return res.status(401).json({ msg: "Invalid Request" });
+    }
+  });
+});
 eateryRouter.post("/verify", (req, res, next) => {
   jwt.verify(req.cookies["Dineat"], process.env.LOB, async (err, payload) => {
     if (!err && payload.id) {
@@ -45,6 +67,12 @@ eateryRouter.post("/verify", (req, res, next) => {
       if (query.rowCount) {
         const verifyTime = checkDateTime(query.rows[0].date, query.rows[0].time);
         if (verifyTime.notToday) {
+          if (verifyTime.expired) {
+            await pool.query("Update bookings set uid = $1 where uid = $2", [
+              "expired",
+              req.body.ticket,
+            ]);
+          }
           return res.json({
             color: "error",
             icon: "mdi-alert",
@@ -53,6 +81,10 @@ eateryRouter.post("/verify", (req, res, next) => {
           });
         }
         if (verifyTime.onTime) {
+          await pool.query("Update bookings set uid = $1 where uid = $2", [
+            "used",
+            req.body.ticket,
+          ]);
           return res.json({
             icon: "mdi-check-circle",
             color: "success",
@@ -86,8 +118,12 @@ eateryRouter.post("/verify", (req, res, next) => {
 
 const checkDateTime = (date, time) => {
   if (!new Date().toISOString().includes(date)) {
+    if (new Date(date).getTime() < Date.now()) {
+      return { notToday: true, expired: true };
+    }
     return { notToday: true };
   }
+
   const current = new Date(date);
   const [hrs, mins] = time.split(":");
   const setTime = new Date(current.setHours(hrs)).setMinutes(mins);
