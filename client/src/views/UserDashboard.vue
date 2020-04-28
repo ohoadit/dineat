@@ -489,7 +489,9 @@ export default {
       if (!voices.length) {
         synthesis.onvoiceschanged = () => {
           voices = synthesis.getVoices();
-          let googleVoice = voices.filter((voice) => voice.name.includes("Google" && "Female"));
+          let googleVoice = voices.filter(
+            (voice) => voice.name.includes("Google") && voice.name.includes("Female")
+          );
           this.voice = googleVoice.length ? googleVoice[0] : voices[1];
           this.synthesis = synthesis;
         };
@@ -576,7 +578,7 @@ export default {
         this.command = "Speak for, places, cuisines ....";
         const result = await this.startCapturing(this.recognize, "voiceDialog");
         this.speech = result;
-        if (result.toLowerCase().includes("open" || "book")) {
+        if (result.toLowerCase().includes("open") || result.toLowerCase().includes("book")) {
           if (result.toLowerCase().includes("first")) {
             return this.bindClick(this.data[0]);
           } else if (result.toLowerCase().includes("second")) {
@@ -777,7 +779,7 @@ export default {
             menu: "timeMenu",
           });
 
-          if (!answer.includes(":" || "a.m." || "p.m.")) {
+          if (!(answer.includes(":") || answer.includes("a.m.") || answer.includes("p.m."))) {
             return this.notify("Invalid time");
           }
           const [actual, meridiem] = answer.split(" ");
