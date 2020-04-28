@@ -211,7 +211,6 @@ dashboardRouter.post("/getQR", (req, res, next) => {
           req.body.id,
         ]);
         const token = data.rows[0].uid;
-        console.log(token);
         if (token === "expired") {
           return res.json({ msg: "The ticket is no longer valid." });
         } else if (token === "used") {
