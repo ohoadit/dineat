@@ -1,16 +1,22 @@
 {
   "name": "dineat",
   "version": "1.0.0",
-  "description": "\"Hosting\"",
+  "description": "A web app to find your favorite restaurants and reserve a table with voice assistance and automation.",
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon server.js"
   },
   "keywords": [
-    "app",
+    "voice-driven-web-app",
     "express",
-    "nodejs"
+    "vuejs",
+    "vuetify",
+    "nodejs",
+    "voice-assistance",
+    "QR",
+    "web-speech-api",
+    "cloudinary"
   ],
   "author": "feedbackloop08",
   "dependencies": {
