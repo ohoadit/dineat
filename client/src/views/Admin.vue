@@ -576,7 +576,7 @@ export default {
       this.message = receipt.msg;
     },
     logout() {
-      this.$router.push("/login");
+      this.$router.go("/login");
       document.cookie = "Dineat=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
       this.$store.commit("sessionEnded");
     },

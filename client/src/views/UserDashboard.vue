@@ -349,12 +349,16 @@
 
                 <v-card-actions>
                   <v-spacer></v-spacer>
+
                   <v-btn @click="fetchQRCode(bkng.id, bkng.name)" color="primary" text>
                     <v-icon left>mdi-eye</v-icon>
                     Ticket
                   </v-btn>
                   <v-btn color="orange" text @click="genNewTicket(bkng.id)">
                     <v-icon left>mdi-sync</v-icon>Regenerate</v-btn
+                  >
+                  <v-btn @click="deleteBooking(bkng.id)" color="red" text
+                    ><v-icon left>mdi-cancel</v-icon>Cancel</v-btn
                   >
                 </v-card-actions>
               </v-card>
@@ -894,8 +898,32 @@ export default {
       data.issued ? this.showSnackbar("success", data.msg) : this.showSnackbar("err", data.msg);
       this.progress = false;
     },
+    deleteBooking(id) {
+      this.progress = true;
+      fetch("/bank/delete", {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        credentials: "same-origin",
+        body: JSON.stringify({
+          id: id,
+        }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.deleted) {
+            this.bookings = this.bookings.filter((bkng) => bkng.id !== id);
+            this.showSnackbar("success", data.msg);
+          } else {
+            this.showSnackbar("err", data.msg);
+          }
+          this.progress = false;
+        });
+    },
     logout() {
-      this.$router.replace("/login");
+      this.$router.go("/login");
       document.cookie = "Dineat=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
       this.$store.commit("sessionEnded");
     },

@@ -255,4 +255,27 @@ dashboardRouter.post("/reissue", (req, res, next) => {
   });
 });
 
+dashboardRouter.post("/delete", (req, res, next) => {
+  jwt.verify(req.cookies["Dineat"], process.env.LOB, async (err, payload) => {
+    if (!err && !payload.id) {
+      try {
+        const query = await pool.query("Delete from bookings where username = $1 and id = $2", [
+          payload.username,
+          req.body.id,
+        ]);
+        if (query.rowCount === 1) {
+          return res.json({ deleted: true, msg: "Reservation cancelled!" });
+        } else {
+          return res.json({ msg: "No such bookings found!" });
+        }
+      } catch (err) {
+        console.log(err);
+        return res.status(500).json({ msg: "Internal Server Error :/" });
+      }
+    } else {
+      return res.status(401).json({ msg: "Invalid Request" });
+    }
+  });
+});
+
 module.exports = dashboardRouter;
