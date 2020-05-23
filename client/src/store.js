@@ -94,7 +94,7 @@ const store = new Vuex.Store({
       lexicons.forEach((lexicon) => {
         state.resMin.forEach((restaurant, index) => {
           if (restaurant.includes(lexicon)) {
-            if (!arr.includes(restaurant)) {
+            if (!arr.includes(state.restaurants[index])) {
               arr.push(state.restaurants[index]);
             }
           }
