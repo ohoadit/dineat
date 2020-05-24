@@ -264,7 +264,7 @@ export default {
       });
       let res = await response.json();
       if (res.matched) {
-        res.admin ? this.$router.go("/admin") : this.$router.go("/dashboard");
+        res.admin ? this.$router.push("/admin") : this.$router.push("/dashboard");
       } else {
         this[res.field] = res.msg;
       }
@@ -288,7 +288,7 @@ export default {
         .then((res) => res.json())
         .then((data) => {
           if (data.matched) {
-            this.$router.go("/eatery");
+            this.$router.push("/eatery");
           } else {
             this[data.field] = data.msg;
           }

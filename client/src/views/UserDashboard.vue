@@ -63,15 +63,19 @@
           </v-row>
           <v-row>
             <v-dialog v-model="voiceDialog" persistent max-width="500px">
-              <v-card tile>
+              <v-card tile :class="mobile ? 'dialog' : ''">
                 <v-card-title class="title font-weight-regular">
                   {{ command }}
                   <v-spacer></v-spacer>
-                  <v-progress-circular
-                    :indeterminate="infinite"
-                    color="primary lighten-1"
-                  ></v-progress-circular>
                 </v-card-title>
+                <v-card-text>
+                  <v-row justify="center" align="center">
+                    <v-progress-circular
+                      :indeterminate="infinite"
+                      color="primary lighten-1"
+                    ></v-progress-circular>
+                  </v-row>
+                </v-card-text>
                 <v-card-actions>
                   <v-spacer></v-spacer>
                   <v-btn color="red lighten-1 white--text" @click="stopCapturing">Stop</v-btn>
@@ -170,6 +174,7 @@
             fullscreen
             persistent
             hide-overlay
+            no-click-animation
             transition="dialog-bottom-transition"
           >
             <v-card tile>
@@ -347,18 +352,20 @@
                   <p class="title">Guests: {{ bkng.guests }}</p>
                 </v-card-text>
 
-                <v-card-actions>
+                <v-card-actions class="subtitle">
                   <v-spacer></v-spacer>
 
                   <v-btn @click="fetchQRCode(bkng.id, bkng.name)" color="primary" text>
-                    <v-icon left>mdi-eye</v-icon>
-                    Ticket
+                    <v-icon medium :left="!mobile">mdi-eye</v-icon>
+                    <span v-if="!mobile">{{ options[0] }}</span>
                   </v-btn>
                   <v-btn color="orange" text @click="genNewTicket(bkng.id)">
-                    <v-icon left>mdi-sync</v-icon>Regenerate</v-btn
+                    <v-icon medium :left="!mobile">mdi-sync</v-icon
+                    ><span v-if="!mobile">{{ options[1] }}</span></v-btn
                   >
                   <v-btn @click="deleteBooking(bkng.id)" color="red" text
-                    ><v-icon left>mdi-cancel</v-icon>Cancel</v-btn
+                    ><v-icon medium :left="!mobile">mdi-cancel</v-icon
+                    ><span v-if="!mobile">{{ options[2] }}</span></v-btn
                   >
                 </v-card-actions>
               </v-card>
@@ -430,6 +437,7 @@ export default {
         icon: "mdi-timetable",
       },
     ],
+    options: ["ticket", "regenerate", "cancel"],
     successCommands: [
       "Here are some results!",
       "This is what I got!",
@@ -462,11 +470,34 @@ export default {
     username() {
       return this.$store.state.user.username;
     },
+    mobile() {
+      return this.$vuetify.breakpoint.xs;
+    },
   },
   watch: {
     activeTab(tab) {
       if (tab === "bookings") {
         this.fetchBookings();
+      }
+    },
+    name(val) {
+      if (val) {
+        this.stopVoiceAssitance();
+      }
+    },
+    guest(val) {
+      if (val) {
+        this.stopVoiceAssitance();
+      }
+    },
+    date(val) {
+      if (val) {
+        this.stopVoiceAssitance();
+      }
+    },
+    time(val) {
+      if (val) {
+        this.stopVoiceAssitance();
       }
     },
   },
@@ -514,6 +545,11 @@ export default {
       this.snackbar = true;
     },
 
+    stopVoiceAssitance() {
+      this.stopCapturing();
+      this.stopSpeaking();
+    },
+
     notify(message) {
       this.synthesis.cancel();
       const speaker = new SpeechSynthesisUtterance(message);
@@ -538,7 +574,9 @@ export default {
 
     startCapturing(recognize, dialog) {
       const promise = new Promise((solved, denied) => {
-        recognize.onstart = () => (this[dialog] = true);
+        recognize.onstart = () => {
+          this[dialog] = true;
+        };
 
         recognize.onspeechend = () => {
           recognize.stop();
@@ -552,12 +590,14 @@ export default {
           let error = "";
           if (err.error === "no-speech") {
             error = "Please try again ...";
+            this.notify(error);
           } else if (err.error === "network") {
             error = "Network access is required for voice search to work";
+            this.notify(error);
           } else if (err.error === "not-allowed") {
             error = "Microphone access is needed for voice search to work";
+            this.notify(error);
           }
-          this.notify(error);
           denied(error);
         };
         recognize.start();
@@ -579,7 +619,7 @@ export default {
           this.alert = true;
           return;
         }
-        this.command = "Speak for, places, cuisines ....";
+        this.command = "Speak for restaurants, cuisines or locations....";
         const result = await this.startCapturing(this.recognize, "voiceDialog");
         this.speech = result;
         if (result.toLowerCase().includes("open") || result.toLowerCase().includes("book")) {
@@ -777,7 +817,7 @@ export default {
       }
       if (!this.time) {
         try {
-          answer = await this.QnA("At what time ?", {
+          answer = await this.QnA("At what time ? (please use AM or PM convention)", {
             open: ["time", "focus"],
             close: ["time", "blur"],
             menu: "timeMenu",
@@ -942,8 +982,12 @@ export default {
   font-size: 16px;
 }
 .dialog {
+  position: absolute;
+  top: 0;
+  left: 0;
   overflow: hidden;
 }
+
 .wrapper1 {
   margin-top: 150px;
 }
