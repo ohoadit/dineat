@@ -148,7 +148,7 @@ const mailer = (res, email, setter, host) => {
   const emailPromise = new Promise((kept, broken) => {
     const user = email.split("@")[0];
     const message = {
-      from: "Dineat <feedbackloop08@gmail.com>",
+      from: "Dineat <aditshah8@gmail.com>",
       to: email,
       subject: "Set your password for Dineat",
       html: `Welcome! <br> <br> Your username for the Dineat app is ${user}. Please use the following link to set your password. Link is valid for 60 minutes from now. <br> <br> http://${host}/reset/${setter}`,
