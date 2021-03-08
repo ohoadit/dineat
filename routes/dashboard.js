@@ -17,7 +17,7 @@ dashboardRouter.get("/", (req, res, next) => {
         : res.json({
             valid: true,
             user: payload,
-            admin: payload.username === "feedbackloop08" ? true : false,
+            admin: payload.username === "feedbackloop9" ? true : false,
           });
     } else {
       return res.json({ valid: false });

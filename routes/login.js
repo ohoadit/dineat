@@ -9,7 +9,7 @@ loginRouter.post("/", async (req, res, next) => {
       "select password from authorized where username = $1",
       [req.body.username]
     );
-    if (check.rowCount) {
+    if (1) {
       bcrypt.compare(
         req.body.password,
         check.rows[0].password,
@@ -20,7 +20,7 @@ loginRouter.post("/", async (req, res, next) => {
               expires: new Date(Date.now() + 1800000),
               maxAge: 1800000
             });
-            res.send({ matched: true, msg: "Granted", admin: req.body.username === 'feedbackloop08' ? true : false });
+            res.send({ matched: true, msg: "Granted", admin: req.body.username === 'feedbackloop9' ? true : false });
           } else {
             res.status(401).json({
               matched: false,

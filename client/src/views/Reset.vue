@@ -18,9 +18,11 @@
                     v-model="password"
                     label="New password"
                     :value="password"
-                    type="password"
+                    :type="viewPass ? 'text' : 'password'"
                     name="password"
                     :rules="[rules.isEmpty, rules.checkLen]"
+                    :append-icon="viewPass ? 'mdi-eye' : 'mdi-eye-off'"
+                    @click:append="viewPass = !viewPass"
                     validate-on-blur
                   >
                   </v-text-field>
@@ -28,7 +30,9 @@
                     v-model="confirm"
                     label="Confirm password"
                     :value="confirm"
-                    type="password"
+                    :type="viewConfirmPass ? 'text' : 'password'"
+                    :append-icon="viewConfirmPass ? 'mdi-eye' : 'mdi-eye-off'"
+                    @click:append="viewConfirmPass = !viewConfirmPass"
                     name="confirm"
                     :rules="[rules.isEmpty, rules.checkLen, match]"
                     validate-on-blur
@@ -69,6 +73,8 @@ export default {
     confirm: "",
     snackbar: false,
     message: "",
+    viewPass: false,
+    viewConfirmPass: false,
     color: "",
     timeout: 6000,
     disabled: false,

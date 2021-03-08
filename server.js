@@ -6,6 +6,7 @@ const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 const morgan = require("morgan");
 const compression = require("compression");
+const helmet = require("helmet");
 const app = express();
 
 const loginRouter = require("./routes/login");
@@ -17,6 +18,7 @@ const eateryRouter = require("./routes/eatery");
 app
   .use(morgan("dev"))
   .use(cors())
+  .use(helmet())
   .use(compression())
   .use(bodyParser.urlencoded({ extended: false }))
   .use(bodyParser.json())

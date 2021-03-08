@@ -58,7 +58,7 @@ const cuisines = [
 master.post("/remove", (req, res, next) => {
   jwt.verify(req.cookies["Dineat"], process.env.LOB, async (err, payload) => {
     try {
-      if (!err && payload.username === "feedbackloop08") {
+      if (!err && payload.username === "feedbackloop9") {
         const confirm = await pool.query("Delete from authorized where username = $1", [
           req.body.user,
         ]);
@@ -101,7 +101,7 @@ const upload = multer({
 
 master.post("/collect", (req, res, next) => {
   jwt.verify(req.cookies["Dineat"], process.env.LOB, (err, payload) => {
-    if (err || payload.username !== "feedbackloop08") {
+    if (err || payload.username !== "feedbackloop9") {
       return res.status(401).json({ msg: "User" });
     }
 
@@ -154,7 +154,7 @@ master.post("/pull", (req, res, next) => {
   jwt.verify(req.cookies["Dineat"], process.env.LOB, async (err, payload) => {
     try {
       if (!err) {
-        const retrieve = await pool.query("Select * from restaurant");
+        const retrieve = await pool.query("Select id, cuisines, image, location, name, speciality, time from restaurant");
         retrieve.rows.forEach((res) => {
           res.image = process.env.CDY_URL + res.image;
           res.cuisines = res.cuisines.replace(/,/g, " | ");
@@ -170,7 +170,7 @@ master.post("/pull", (req, res, next) => {
 
 master.post("/reset", (req, res, next) => {
   jwt.verify(req.cookies["Dineat"], process.env.LOB, async (err, payload) => {
-    if (!err && payload.username === "feedbackloop08" && req.body.key === process.env.KEY) {
+    if (!err && payload.username === "feedbackloop9" && req.body.key === process.env.KEY) {
       const hash = await bcrypt.hash(req.body.password, 10);
       try {
         const update = await pool.query("Update restaurant set password = $1 where id = $2", [
@@ -193,7 +193,7 @@ master.post("/reset", (req, res, next) => {
 master.post("/records", (req, res, next) => {
   jwt.verify(req.cookies["Dineat"], process.env.LOB, async (err, payload) => {
     try {
-      if (!err && payload.username === "feedbackloop08") {
+      if (!err && payload.username === "feedbackloop9") {
         const data = await pool.query("Select username, token, stamp from authorized");
         constructData(res, [...data.rows]);
         return;

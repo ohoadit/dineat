@@ -2,7 +2,9 @@ const BundleAnalyzerPlugin = require("webpack-bundle-analyzer").BundleAnalyzerPl
 
 module.exports = {
   transpileDependencies: ["vuetify"],
-
+  // chainWebpack: (config) => {
+  //   config.plugins.delete('prefetch');
+  // },
   // chainWebpack: (config) => {
   //   // config.optimization.splitChunks({
   //   //   chunks: "all",

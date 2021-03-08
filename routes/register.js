@@ -7,15 +7,15 @@ const jwt = require("jsonwebtoken");
 
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
-  port: 587,
-  secure: false,
+  port: 465,
+  secure: true,
   auth: {
     type: "OAuth2",
     user: process.env.senderEmail,
     clientId: process.env.C_ID,
     clientSecret: process.env.C_KEY,
     refreshToken: process.env.REFRESH,
-    accessToken: process.env.ACCESS,
+    // accessToken: getAccessToken(),
   },
 });
 
@@ -105,16 +105,20 @@ registerRouter.post("/register", async (req, res) => {
       "select * from authorized where username = $1",
       [user]
     );
+    const setter = uniqueKey();
+    const time = Math.floor(Date.now() / 1000);
     if (check.rowCount === 0) {
-      const setter = uniqueKey();
-      const time = Math.floor(Date.now() / 1000);
       const entry = await pool.query(
         "insert into authorized(username, token, stamp, domain) values ($1, $2, $3, $4)",
         [user, setter, time, domain]
       );
       await mailer(res, email, setter, req.headers.host);
     } else {
-      res.json({ msg: "Please don't register twice", sent: false });
+      const entry = await pool.query(
+        "update authorized set token = $2, stamp = $3, domain = $4 where username = $1",
+        [user, setter, time, domain]
+      );
+      await mailer(res, email, setter, req.headers.host, 'reset');
     }
   } catch (err) {
     console.log(err);
@@ -125,7 +129,7 @@ registerRouter.post("/register", async (req, res) => {
 registerRouter.post("/renew", (req, res, next) => {
   jwt.verify(req.cookies["Dineat"], process.env.LOB, async (err, payload) => {
     try {
-      if (!err && payload.username === "feedbackloop08") {
+      if (!err && payload.username === "feedbackloop9") {
         const email = req.body.username + "@" + req.body.domain;
         const setter = uniqueKey();
         const time = Math.floor(Date.now() / 1000);
@@ -144,7 +148,7 @@ registerRouter.post("/renew", (req, res, next) => {
   });
 });
 
-const mailer = (res, email, setter, host) => {
+const mailer = (res, email, setter, host, type) => {
   const emailPromise = new Promise((kept, broken) => {
     const user = email.split("@")[0];
     const message = {
@@ -160,7 +164,7 @@ const mailer = (res, email, setter, host) => {
       } else {
         console.log(result);
         res.json({
-          msg: "A password setter link has been sent to your email address.",
+          msg: `A password ${type ? 'reset' : 'setter'} link has been sent to your email address.`,
           sent: true,
         });
         kept("Email sent successfully");

@@ -5,7 +5,8 @@
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon server.js"
+    "start": "nodemon server.js",
+    "build": "cd client && npm run build"
   },
   "keywords": [
     "voice-driven-web-app",
@@ -18,24 +19,25 @@
     "web-speech-api",
     "cloudinary"
   ],
-  "author": "feedbackloop08",
+  "author": "ohoadit",
   "dependencies": {
-    "bcrypt": "^5.0.0",
+    "bcrypt": "^5.0.1",
     "body-parser": "^1.19.0",
-    "cloudinary": "^1.21.0",
+    "cloudinary": "^1.25.0",
     "compression": "^1.7.4",
     "cookie-parser": "^1.4.5",
     "cors": "^2.8.5",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
+    "helmet": "^4.4.1",
     "jsonwebtoken": "^8.5.1",
     "morgan": "^1.10.0",
     "multer": "^1.4.2",
-    "nodemailer": "^6.4.6",
-    "pg": "^7.18.2",
+    "nodemailer": "^6.5.0",
+    "pg": "^8.5.1",
     "qrcode": "^1.4.4"
   },
   "devDependencies": {
-    "nodemon": "^2.0.3"
+    "nodemon": "^2.0.7"
   }
 }

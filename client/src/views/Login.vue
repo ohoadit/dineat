@@ -31,17 +31,32 @@
                 ></v-img>
               </v-col>
               <v-col cols="12" v-if="mobile">
-                <v-btn dark class="mx-7" width="90" @click="loginDialog = true">Login</v-btn>
-                <v-btn dark class="mx-7" width="90" @click="signupDialog = true">Signup</v-btn>
+                <v-btn dark class="mx-7" width="90" @click="loginDialog = true"
+                  >Login</v-btn
+                >
+                <v-btn dark class="mx-7" width="90" @click="signupDialog = true"
+                  >Signup</v-btn
+                >
               </v-col>
             </v-row>
           </v-card>
         </v-carousel-item>
       </v-carousel>
-      <v-card flat tile class="pa-0 ma-0" color="#f6f7f9" height="25vh" v-if="!mobile">
+      <v-card
+        flat
+        tile
+        class="pa-0 ma-0"
+        color="#f6f7f9"
+        height="25vh"
+        v-if="!mobile"
+      >
         <v-row justify="center" align="center" class="fill-height">
-          <v-btn dark class="mx-10" width="90" @click="loginDialog = true">Login</v-btn>
-          <v-btn dark class="mx-10" width="90" @click="signupDialog = true">Signup</v-btn>
+          <v-btn dark class="mx-10" width="90" @click="loginDialog = true"
+            >Login</v-btn
+          >
+          <v-btn dark class="mx-10" width="90" @click="signupDialog = true"
+            >Signup</v-btn
+          >
         </v-row></v-card
       >
     </v-container>
@@ -55,7 +70,9 @@
       <v-card tile>
         <v-card-title class="headline font-weight-regular"
           >Dineat<v-spacer></v-spacer>
-          <v-btn icon @click="loginDialog = false"><v-icon>mdi-close</v-icon></v-btn></v-card-title
+          <v-btn icon @click="loginDialog = false"
+            ><v-icon>mdi-close</v-icon></v-btn
+          ></v-card-title
         >
 
         <v-card-text class="px-7">
@@ -72,7 +89,9 @@
             >
             </v-text-field>
             <v-text-field
-              type="password"
+              :type="viewPass1 ? 'text' : 'password'"
+              :append-icon="viewPass1 ? 'mdi-eye' : 'mdi-eye-off'"
+              @click:append="viewPass1 = !viewPass1"
               v-model="password"
               label="Password"
               name="password"
@@ -112,7 +131,9 @@
       <v-card tile>
         <v-card-title class="headline font-weight-regular"
           >Restaurant<v-spacer></v-spacer>
-          <v-btn icon @click="restDialog = false"><v-icon>mdi-close</v-icon></v-btn></v-card-title
+          <v-btn icon @click="restDialog = false"
+            ><v-icon>mdi-close</v-icon></v-btn
+          ></v-card-title
         >
         <v-card-text class="px-7">
           <v-form ref="reForm" @submit.prevent="onSignin">
@@ -126,7 +147,9 @@
             ></v-text-field>
             <v-text-field
               v-model="pass"
-              type="password"
+              :type="viewPass1 ? 'text' : 'password'"
+              :append-icon="viewPass1 ? 'mdi-eye' : 'mdi-eye-off'"
+              @click:append="viewPass1 = !viewPass1"
               name="id"
               label="Password"
               :rules="[rules.isEmpty, rules.checkLength]"
@@ -154,7 +177,11 @@
     </v-dialog>
     <v-dialog v-model="signupDialog" v-if="signupDialog" max-width="500px">
       <v-card tile>
-        <v-progress-linear indeterminate color="primary" :active="showProgress"></v-progress-linear>
+        <v-progress-linear
+          indeterminate
+          color="primary"
+          :active="showProgress"
+        ></v-progress-linear>
         <v-card-title class="headline font-weight-regular">Dineat</v-card-title>
         <v-card-text class="pt-5 px-5">
           <v-form ref="signup" @submit.prevent>
@@ -171,14 +198,20 @@
           </v-form>
         </v-card-text>
         <v-card-actions class="justify-center">
-          <v-btn color="primary" text :disabled="disabled" class="mb-2" @click="onSignup"
-            >Register</v-btn
+          <v-btn
+            color="primary"
+            text
+            :disabled="disabled"
+            class="mb-2"
+            @click="onSignup"
+            >Register | Reset</v-btn
           >
         </v-card-actions>
       </v-card>
     </v-dialog>
     <v-snackbar v-model="snackbar" :color="color" :timeout="timeout"
-      >{{ message }} <v-btn text @click="snackbar = false">Close</v-btn></v-snackbar
+      >{{ message }}
+      <v-btn text @click="snackbar = false">Close</v-btn></v-snackbar
     >
   </v-app>
 </template>
@@ -192,6 +225,8 @@ export default {
     password: "",
     userError: "",
     passError: "",
+    viewPass1: false,
+    viewPass2: false,
     restDialog: false,
     id: "",
     pass: "",
@@ -215,12 +250,14 @@ export default {
       {
         img: "dineat",
         color: "indigo lighten-5",
-        desc: "Dineat is a web-app that helps users reserve tables in their favourite restaurants",
+        desc:
+          "Dineat is a web-app that helps users reserve tables in their favourite restaurants",
       },
       {
         img: "search",
         color: "yellow lighten-4",
-        desc: "Search for any restaurants by name cuisine or location with voice",
+        desc:
+          "Search for any restaurants by name cuisine or location with voice",
       },
       {
         img: "form",
@@ -264,7 +301,9 @@ export default {
       });
       let res = await response.json();
       if (res.matched) {
-        res.admin ? this.$router.push("/admin") : this.$router.push("/dashboard");
+        res.admin
+          ? this.$router.push("/admin")
+          : this.$router.push("/dashboard");
       } else {
         this[res.field] = res.msg;
       }
