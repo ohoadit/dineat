@@ -6,7 +6,7 @@ const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 const morgan = require("morgan");
 const compression = require("compression");
-const helmet = require("helmet");
+// const helmet = require("helmet");
 const app = express();
 
 const loginRouter = require("./routes/login");
@@ -15,21 +15,21 @@ const dashboardRouter = require("./routes/dashboard");
 const masterRouter = require("./routes/master");
 const eateryRouter = require("./routes/eatery");
 
-helmet.contentSecurityPolicy({
-  directives: {
-      defaultSrc: [ "'self'" ],
-      baseUri : [ "'self'" ],
-      fontSrc: [ "'self'", "https:", "data:" ],
-      frameAncestors: [ "'self'" ],
-      imgSrc: [ "'self'", "data:", "https://res.cloudinary.com/*"],
-      scriptSrc: [ "'self'" ],
-  }
-});
+// helmet.contentSecurityPolicy({
+//   directives: {
+//       defaultSrc: [ "'self'" ],
+//       baseUri : [ "'self'" ],
+//       fontSrc: [ "'self'", "https:", "data:" ],
+//       frameAncestors: [ "'self'" ],
+//       imgSrc: [ "'self'", "data:", "https://res.cloudinary.com/*"],
+//       scriptSrc: [ "'self'" ],
+//   }
+// });
 
 app
   .use(morgan("dev"))
   .use(cors())
-  .use(helmet())
+  // .use(helmet())
   .use(compression())
   .use(bodyParser.urlencoded({ extended: false }))
   .use(bodyParser.json())
