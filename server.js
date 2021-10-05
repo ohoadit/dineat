@@ -17,14 +17,12 @@ const eateryRouter = require("./routes/eatery");
 
 helmet.contentSecurityPolicy({
   directives: {
-      "default-src":[ "'self'" ],
-      "base-uri":[ "'self'" ],
-      "font-src":[ "'self'", "https:", "data:" ],
-      "frame-ancestors":[ "'self'" ],
-      "img-src":[ "'self'", "data:", "https://res.cloudinary.com"],
-      "script-src":[ "'self'" ],
-      "script-src-attr":[ "'none'" ],
-      "style-src":[ "'self'", "https:", "'unsafe-inline'" ],
+      defaultSrc: [ "'self'" ],
+      baseUri : [ "'self'" ],
+      fontSrc: [ "'self'", "https:", "data:" ],
+      frameAncestors: [ "'self'" ],
+      imgSrc: [ "'self'", "data:", "https://res.cloudinary.com/*"],
+      scriptSrc: [ "'self'" ],
   }
 });
 
